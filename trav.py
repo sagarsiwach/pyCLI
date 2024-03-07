@@ -9,7 +9,7 @@ import time
 # Configuration
 username = "SCAR"
 password = "fiverr"
-production_loops = 1000000
+production_loops = 500
 storage_loops = 0
 total_production_done = 0
 total_storage_done = 0
@@ -123,7 +123,7 @@ def train_praetorians():
 def train_tr2():
     try:
         driver.get("https://fun.gotravspeed.com/build.php?id=25")
-        WebDriverWait(driver, 3).until(EC.visibility_of_element_located((By.XPATH, "//tr[2]/td[3]/a"))).click()
+        WebDriverWait(driver, 3).until(EC.visibility_of_element_located((By.XPATH, "//tr[1]/td[3]/a"))).click()
         driver.find_element(By.ID, "btn_train").click()
         print("Training tr2 in the current village.")
     except Exception as e:
@@ -135,10 +135,10 @@ def train_troops_in_all_villages():
         driver.get(village_url)
         time.sleep(1)
         if index == 0:
-            for _ in range(15):
+            for _ in range(10):
                 train_praetorians()
         else:
-            for _ in range(15):
+            for _ in range(10):
                 train_tr2()
 
 def return_to_capital():
@@ -162,7 +162,7 @@ while True:
     try:
         increase_production()
         increase_storage()
-        # train_troops_in_all_villages()
+        train_troops_in_all_villages()
     except Exception as e:
         print(f"Error encountered: {e}. Restarting from login page.")
         login()

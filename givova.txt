@@ -1,0 +1,168 @@
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import time
+import requests
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Configuration
+#I am showing trial on my account, later you can put your credentials.
+username = "givova"
+password = "1977"
+
+
+
+# Setup Firefox options
+options = Options()
+options.headless = True
+
+# Function to initialize WebDriver
+def initialize_driver():
+    global driver
+    driver = webdriver.Firefox(options=options)
+    logging.info("WebDriver initialized")
+
+# Function to check internet connection
+def check_internet_connection():
+    while True:
+        try:
+            requests.get("https://www.google.com", timeout=5)
+            logging.info("Internet connection is available")
+            return True
+        except requests.ConnectionError:
+            logging.warning("No internet connection. Retrying...")
+            time.sleep(3)
+
+# Function to check host availability
+def check_host():
+    while True:
+        try:
+            response = requests.get("https://www.gotravspeed.com", timeout=5)
+            if response.status_code == 200:
+                logging.info("Host is available")
+                return True
+        except requests.RequestException:
+            logging.warning("Host error. Retrying...")
+            time.sleep(5)
+
+# Function to accept cookies
+def accept_cookies():
+    try:
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "cookie__btn"))).click()
+        logging.info("Cookies accepted")
+    except Exception as e:
+        logging.error(f"Error accepting cookies: {e}")
+
+# Function to log in
+def login():
+    while True:
+        try:
+            driver.get("https://www.gotravspeed.com")
+            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "name"))).send_keys(username)
+            driver.find_element(By.ID, "password").send_keys(password)
+            driver.find_element(By.ID, "password").send_keys(Keys.RETURN)
+            WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//h2/font[contains(text(),'Fun')]/ancestor::div[1]"))).click()
+            WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@class,'default__button-o-login')]"))).click()
+            logging.info("Logged in successfully")
+            return
+        except Exception as e:
+            logging.error(f"Error during login: {e}")
+            check_internet_connection()
+            check_host()
+
+# Function to get the list of non-capital villages for a given player, excluding the capital village by its ID
+def get_player_villages(uid, capital_village_id):
+    try:
+        driver.get(f"https://fun.gotravspeed.com/profile.php?uid={uid}")
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "villages")))
+        village_links = driver.find_elements(By.XPATH, "//table[@id='villages']//a[contains(@href, 'village3.php?id=')]")
+        villages = []
+        for link in village_links:
+            village_id = link.get_attribute("href").split('=')[-1]
+            if village_id != capital_village_id:
+                village_name = link.text
+                village_url = f"https://fun.gotravspeed.com/v2v.php?id={village_id}"
+                villages.append((village_name, village_url))
+        sorted_villages = sorted(villages, key=lambda x: x[0])
+        logging.info(f"Found {len(sorted_villages)} non-capital villages for player {uid} excluding capital village ID {capital_village_id}")
+        return sorted_villages
+    except Exception as e:
+        logging.error(f"Error getting non-capital villages for player {uid} excluding capital village ID {capital_village_id}: {e}")
+
+
+
+
+# Function to attack a village
+def attack_village(village_url):
+    try:
+        driver.get(village_url)
+        max_phalanxes_link = driver.find_element(By.XPATH, "//input[@name='t[21]']/following-sibling::a")
+        max_phalanxes_link.click()  # Click on the link to automatically populate the input field
+        raid_option = driver.find_element(By.XPATH, "//input[@value='4']")
+        raid_option.click()
+        attack_button = driver.find_element(By.ID, "sendbutton")
+        attack_button.click()
+        confirm_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "btn_ok")))
+        confirm_button.click()
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//p[contains(text(), 'Attack of the looting')]")))
+        time.sleep(3)
+        logging.info(f"Attacked village at {village_url}")
+    except Exception as e:
+        logging.error(f"Error attacking village at {village_url}: {e}")
+
+
+# Function to train troops
+def train_troops():
+    try:
+        driver.get("https://fun.gotravspeed.com/build.php?id=19")
+        WebDriverWait(driver, 3).until(EC.visibility_of_element_located((By.XPATH, "//tr[1]/td[3]/a"))).click()
+        driver.find_element(By.ID, "btn_train").click()
+        logging.info("Training Praetorians in the current village")
+    except Exception as e:
+        logging.error(f"Error during Praetorians training in the current village: {e}")
+
+# Function to attack a village and then train troops
+def attack_village_and_train_troops(village_url):
+    attack_village(village_url)
+    train_troops()
+
+# Function to get the list of villages, attack each one, and train troops
+def get_villages_attack_and_train(uid, capital_village_id):
+    non_capital_villages = get_player_villages(uid, capital_village_id)
+    if non_capital_villages:
+        for village in non_capital_villages:
+            attack_village(village[1])
+            for _ in range(240):  # Train troops 5 times
+                train_troops()
+
+
+
+# Main flowc
+
+initialize_driver()
+check_internet_connection()
+check_host()
+accept_cookies()
+login()
+
+# Example usage
+uid = 13  # Replace with the actual user ID
+capital_village_id = '4382' # Replace with the actual capital village ID
+
+while True:
+    try:
+        get_villages_attack_and_train(uid, capital_village_id)  # Pass capital_village_id here
+    except Exception as e:
+        logging.error(f"Error encountered: {e}. Reinitializing driver and checking connections before retrying.")
+        driver.quit()
+        initialize_driver()
+        check_internet_connection()
+        check_host()
+        login()
+
