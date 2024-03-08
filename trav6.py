@@ -243,7 +243,7 @@ def build_and_upgrade_resource(position_id):
         logging.error(f"Error encountered during build and upgrade: {e}")
 
 
-def start_celebration(times=100):
+def start_celebration(times=10000):
     town_hall_id = 35  # Adjust this to the correct ID for your Town Hall
     for _ in range(times):
         try:
@@ -362,46 +362,72 @@ def train_settlers_concurrently():
 
 
 
-def train_settlers_and_find_new_village(driver):
-    try:
-        train_settlers_concurrently(driver)
-        logging.info("Training 3 Settlers")
-        time.sleep(5)  # Add a delay to ensure settlers are trained
+def train_settlers_and_find_new_village():
+    residence_id = 30  # Adjust this to the correct ID for your Residence
 
-        # Navigate to the Map and find a suitable spot for the new village
-        driver.get("https://fun.gotravspeed.com/map.php")
-        logging.info("Navigated to Map")
-        for village_id in range(70000, 80001):  # Adjust the range as needed
-            driver.get(f"https://fun.gotravspeed.com/village3.php?id={village_id}")
-            if "building a new village" in driver.page_source:
-                logging.info(f"Found a suitable spot for a new village at ID {village_id}")
-                build_new_village_link = WebDriverWait(driver, 10).until(
-                    EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'building a new village')]"))
-                )
-                build_new_village_link.click()
-                logging.info("Clicked on 'building a new village'")
-                WebDriverWait(driver, 10).until(
-                    EC.element_to_be_clickable((By.ID, "btn_ok"))
-                ).click()
-                logging.info("Confirmed new village")
-                
-                # Wait for the new village popup and handle it
-                while True:
-                    driver.refresh()  # Refresh the page to check for the popup
-                    try:
-                        continue_link = WebDriverWait(driver, 5).until(
-                            EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), '» continue')]"))
-                        )
-                        continue_link.click()
-                        logging.info("Clicked on Continue in the new village popup")
-                        break  # Exit the loop once the popup is handled
-                    except TimeoutException:
-                        logging.info("Waiting for new village popup to appear...")
-                        time.sleep(5)  # Wait before refreshing again
-                break
-    except Exception as e:
-        logging.error(f"Error during training settlers and finding a new village: {e}")
+    time.sleep(0.5)  # Add a short delay to ensure the page is loaded
+    # Navigate to the Residence
+    driver.get(f"https://fun.gotravspeed.com/build.php?id=30")
+    logging.info("Navigated to Residence")
+    time.sleep(0.5)
 
+    # # Train 3 Settlers
+    # max_settlers_link = WebDriverWait(driver, 3).until(
+    #     EC.element_to_be_clickable((By.XPATH, "//a[contains(@onclick, '_tf30')]"))
+    # )
+    # max_settlers_link.click()
+    # logging.info("Settlers quantity set to maximum")
+    # time.sleep(0.5)
+
+    # train_button = driver.find_element(By.ID, "btn_train")
+    # train_button.click()
+    train_settlers_concurrently()
+    logging.info("Training 3 Settlers")
+    time.sleep(0.5)
+
+    # Wait for the settlers to be trained before proceeding
+    # Add any necessary waiting logic here
+
+    # Navigate to the Map
+    driver.get("https://fun.gotravspeed.com/map.php")
+    logging.info("Navigated to Map")
+    time.sleep(0.5)
+
+    # Find a suitable spot for the new village
+    for village_id in range(70000, 80001):
+        driver.get(f"https://fun.gotravspeed.com/village3.php?id={village_id}")
+        village_options = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, "options"))
+        )
+        if "building a new village" in village_options.text:
+            # Found a suitable spot, proceed with next steps
+            break
+
+    time.sleep(0.5)
+
+    # Click on "building a new village"
+    build_new_village_link = WebDriverWait(driver, 3).until(
+        EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'building a new village')]"))
+    )
+    build_new_village_link.click()
+    logging.info("Clicked on 'building a new village'")
+    time.sleep(0.5)
+
+    # Click on the OK button to confirm
+    ok_button = WebDriverWait(driver, 3).until(
+        EC.element_to_be_clickable((By.ID, "btn_ok"))
+    )
+    ok_button.click()
+    logging.info("Clicked on OK button to confirm new village")
+    time.sleep(0.5)
+
+    # Handle the new village popup
+    continue_link = WebDriverWait(driver, 3).until(
+        EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), '» continue')]"))
+    )
+    continue_link.click()
+    logging.info("Clicked on Continue in the new village popup")
+    time.sleep(0.5)
 
 
 
@@ -458,23 +484,12 @@ def master_function():
     global global_village_number
     max_villages = 10  # Set the maximum number of villages you want
 
-    # Build the capital village
-    # build_capital_village()
-    
     # Navigate to the capital village and start celebrations
-    # switch_to_village(2823)  # Replace capital_village_id with the actual ID
-    # for _ in range(1):
-    #     start_celebration()
-    
+    switch_to_village(capital_village_id)  # Replace capital_village_id with the actual ID
+    for _ in range(10000):
+        start_celebration()
 
     while True:
-        
-        newest_village_id = current_village_ids[-1]
-        switch_to_village(newest_village_id)
-
-        # Build the secondary village
-        build_secondary_village()
-        
         # Find and settle a new village
         train_settlers_and_find_new_village()
 
@@ -486,9 +501,13 @@ def master_function():
             break
 
         # Switch to the newest village and rename it
+        newest_village_id = current_village_ids[-1]
         switch_to_village(newest_village_id)
         rename_village(newest_village_id, f"{global_village_number:04}")
         global_village_number += 1
+
+        # Build the secondary village
+        build_secondary_village()
 
 
 
@@ -518,11 +537,10 @@ login()
 
 while True:
     try:
-        master_function()
         # build_and_upgrade(position_id=39, building_id=16)
-        # build_capital_village()
-        # build_secondary_village()
-        # start_celebration(10000)
+        build_capital_village()
+        build_secondary_village()
+        start_celebration(500)
         train_settlers_and_find_new_village()
     except Exception as e:
         logging.error(f"Error encountered: {e}. Reinitializing driver and checking connections before retrying.")
