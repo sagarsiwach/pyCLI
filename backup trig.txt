@@ -15,6 +15,8 @@ import concurrent.futures
 from selenium.common.exceptions import TimeoutException
 from concurrent.futures import ThreadPoolExecutor
 import random
+import os
+import math
 import json
 
 
@@ -56,6 +58,61 @@ def check_internet_connection():
         except requests.ConnectionError:
             logging.warning("No internet connection. Retrying...")
             time.sleep(1)
+            
+            
+def save_village_list(village_list):
+    with open("villages.txt", "w") as file:
+        for village in village_list:
+            file.write(f"{village['id']}: {village['name']}\n")
+
+def load_village_list():
+    if not os.path.exists("villages.txt"):
+        return []
+
+    village_list = []
+    with open("villages.txt", "r") as file:
+        for line in file:
+            parts = line.strip().split(": ")
+            village_list.append({"id": parts[0], "name": parts[1]})
+    return village_list
+
+def update_global_village_number():
+    global global_village_number
+    village_list = load_village_list()
+    if village_list:
+        last_village_name = village_list[-1]["name"]
+        if last_village_name.isdigit():
+            global_village_number = int(last_village_name) + 1
+
+def get_village_coordinates(radius, start_angle=0, step_angle=60):
+    coordinates = []
+    angle = start_angle
+    while angle < 360:
+        x = round(radius * math.cos(math.radians(angle)))
+        y = round(radius * math.sin(math.radians(angle)))
+        coordinates.append((x, y))
+        angle += step_angle
+    return coordinates
+
+def find_village_in_circle(radius, start_vid):
+    village_coords = get_village_coordinates(radius)
+    for x, y in village_coords:
+        vid = get_village_id(x, y)
+        if vid >= start_vid:
+            return vid
+    return None
+
+def get_village_id(x, y):
+    if x >= 0 and y >= 0:
+        return x + (401 * y) + 1
+    elif x < 0 and y >= 0:
+        return (401 * (y + 1)) - abs(x)
+    elif x >= 0 and y < 0:
+        return (401 * (abs(y) + 1)) + x
+    else:
+        return (401 * abs(y)) - abs(x) + 1
+
+# Modify the master_function to use the new village finding logic
 
 # Function to check host availability
 def check_host():
@@ -504,8 +561,43 @@ def build_or_upgrade_resource(position_id, loop):
     except Exception as e:
         logging.error(f"Error upgrading resource at position {position_id}: {e}")
 
+# Create a new function to settle a new village
+def settle_new_village(village_id):
+    try:
+        # Navigate to the new village location
+        driver.get(f"https://fun.gotravspeed.com/village3.php?id={village_id}")
+        logging.info(f"Navigated to the location of the new village (ID: {village_id})")
 
-def train_settlers_and_find_new_village():
+        # Click on the "Send settlers" link
+        send_settlers_link = WebDriverWait(driver, 3).until(
+            EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'Send settlers')]"))
+        )
+        send_settlers_link.click()
+        logging.info("Clicked on 'Send settlers'")
+
+        # Confirm the action
+        confirm_button = WebDriverWait(driver, 3).until(
+            EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Confirm')]"))
+        )
+        confirm_button.click()
+        logging.info("Confirmed sending settlers to the new village")
+
+        # Wait for the settlement process to be acknowledged
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Settlement process has started')]"))
+        )
+        logging.info("Settlement process has started for the new village")
+
+        # Update the village list with the new village
+        village_list = load_village_list()
+        village_list.append({"id": str(village_id), "name": f"{global_village_number:04}"})
+        save_village_list(village_list)
+
+    except Exception as e:
+        logging.error(f"Error settling the new village (ID: {village_id}): {e}")
+
+
+def train_settlers():
     try:
         train_settlers_concurrently()  # Remove the 'driver' argument
         logging.info("Training 3 Settlers")
@@ -529,9 +621,7 @@ def train_settlers_and_find_new_village():
                 logging.info("Confirmed new village")
                 
                 # Wait for the new village popup and handle it
-                max_attempts = 2
-                attempts = 0
-                while attempts < max_attempts:
+                while True:
                     driver.refresh()  # Refresh the page to check for the popup
                     try:
                         continue_link = WebDriverWait(driver, 5).until(
@@ -541,15 +631,9 @@ def train_settlers_and_find_new_village():
                         logging.info("Clicked on Continue in the new village popup")
                         break  # Exit the loop once the popup is handled
                     except TimeoutException:
-                        attempts += 1
                         logging.info("Waiting for new village popup to appear...")
-                        if attempts == max_attempts:
-                            logging.error("New village popup did not appear after multiple attempts")
-                            break
                         time.sleep(5)  # Wait before refreshing again
-                                
-               
-
+                break
     except Exception as e:
         logging.error(f"Error during training settlers and finding a new village: {e}")
 
@@ -566,6 +650,7 @@ def switch_to_0000_village():
         logging.error(f"Error switching to the 0000 village: {e}")
         
         
+
 def rename_village(village_id, village_name):
     # Navigate to the profile page
     driver.get(f"https://fun.gotravspeed.com/profile.php?vid={village_id}")
@@ -591,6 +676,20 @@ def rename_village(village_id, village_name):
     )
     ok_button.click()
 
+    # Update the global village number
+    global global_village_number
+    global_village_number += 1
+
+    # Update the village list with the new name
+    village_list = load_village_list()
+    for village in village_list:
+        if village["id"] == str(village_id):
+            village["name"] = village_name
+            break
+    save_village_list(village_list)
+
+    logging.info(f"Renamed village {village_id} to {village_name}")
+
     
 def get_village_ids(excluded_ids):
     driver.get("https://fun.gotravspeed.com/village2.php")
@@ -598,12 +697,22 @@ def get_village_ids(excluded_ids):
         EC.presence_of_all_elements_located((By.XPATH, "//table[@id='vlist']//td[@class='link']//a[contains(@href, 'vid=')]"))
     )
     village_ids = [link.get_attribute("href").split('=')[-1] for link in village_links]
-    filtered_village_ids = [vid for vid in village_ids if vid not in excluded_ids]
+    
+    # Load the existing village list from the file
+    village_list = load_village_list()
+    
+    # Update the village list with the new IDs and names
+    for vid in village_ids:
+        if vid not in excluded_ids:
+            if not any(village['id'] == vid for village in village_list):
+                village_list.append({"id": vid, "name": "Unknown"})
+    
+    # Save the updated village list to the file
+    save_village_list(village_list)
 
-    # Log the list of village IDs
-    logging.info(f"Obtained village IDs: {filtered_village_ids}")
+    logging.info(f"Obtained village IDs: {village_ids}")
+    return village_ids
 
-    return filtered_village_ids
 
 
     
@@ -628,20 +737,12 @@ def switch_to_village(village_id):
 
 
 
+# Modify the master_function to use the new village finding logic
 def master_function():
     global global_village_number
     max_villages = 100  # Set the maximum number of villages you want
 
-    # Build the capital village
-    # build_capital_village()
-    
-    # Navigate to the capital village and start celebrations
-    # switch_to_village(2823)  # Replace capital_village_id with the actual ID
-    # for _ in range(1):
-    #     start_celebration(10)
-        
-    # train_settlers_and_find_new_village()  # Pass the driver object here
-    
+    update_global_village_number()
 
     while True:
         # Get the list of current village IDs
@@ -657,7 +758,13 @@ def master_function():
         build_secondary_village()
         
         # Find and settle a new village
-        train_settlers_and_find_new_village()  # Pass the driver object here
+        radius = 1  # Starting search radius
+        while True:
+            new_vid = find_village_in_circle(radius, newest_village_id)
+            if new_vid:
+                settle_new_village(new_vid)
+                break
+            radius += 1  # Increase the search radius
 
         # If the number of villages reaches the limit, break the loop
         if len(current_village_ids) >= max_villages:
@@ -683,64 +790,27 @@ def master_function():
 def build_secondary_village():
 
     # rename_village()    
-    build_and_upgrade(position_id=26, building_id=15, loop=10, building_name="Main Building")
-    build_and_upgrade(position_id=39, building_id=16, loop=10, building_name="Rally Point")
-    # build_and_upgrade(position_id=40, building_id=33, loop=20, building_name="City Wall")
-    # build_and_upgrade(position_id=25, building_id=19, loop=20, building_name="Barracks")
-    # build_and_upgrade(position_id=33, building_id=22, loop=20, building_name="Academy")
+    build_and_upgrade(position_id=26, building_id=15, loop=20, building_name="Main Building")
+    build_and_upgrade(position_id=39, building_id=16, loop=20, building_name="Rally Point")
+    build_and_upgrade(position_id=40, building_id=33, loop=20, building_name="City Wall")
+    build_and_upgrade(position_id=25, building_id=19, loop=20, building_name="Barracks")
+    build_and_upgrade(position_id=33, building_id=22, loop=20, building_name="Academy")
     build_and_upgrade(position_id=30, building_id=25, loop=20, building_name="Residence")
     build_and_upgrade(position_id=34, building_id=7, loop=10, building_name="Iron Foundry")
     build_and_upgrade(position_id=31, building_id=5, loop=10, building_name="Sawmill")
     build_and_upgrade(position_id=27, building_id=6, loop=10, building_name="Brickworks")
-    # build_and_upgrade(position_id=24, building_id=37, loop=20, building_name="Hero's Mansion")
+    build_and_upgrade(position_id=24, building_id=37, loop=20, building_name="Hero's Mansion")
     build_and_upgrade(position_id=24, building_id=44, loop=1, building_name="Christmas Tree")
-    # build_and_upgrade(position_id=37, building_id=27, loop=20, building_name="Treasury")z
-    
-    
-def rename_all_villages():
-    global global_village_number
-    excluded_ids = []  # Add any village IDs you want to exclude from renaming
-
-    # Fetch the list of all current village IDs, excluding any specified
-    village_ids = get_village_ids(excluded_ids)
-
-    # It's assumed get_village_ids() returns a list of dictionaries with 'id' and 'name' keys
-    # If it only returns a list of IDs, adjust the sorting and access accordingly
-
-    # Sort villages by their IDs (assuming numeric IDs for simplicity)
-    village_ids_sorted = sorted(village_ids, key=lambda x: int(x['id']))
-
-    for index, village in enumerate(village_ids_sorted, start=1):
-        village_id = village['id']
-        # Generate a new name for the village using its index
-        new_village_name = f"{index:04}"
-
-        # Switch to the village by its ID
-        switch_to_village(village_id)
-
-        # Rename the village
-        rename_village(village_id, new_village_name)
-
-        print(f"Renamed village ID {village_id} to {new_village_name}")
+    build_and_upgrade(position_id=37, building_id=27, loop=20, building_name="Treasury")
 
 # Main flow
 initialize_driver()
-# check_internet_connection()
-# check_host()
 accept_cookies()
 login()
 
 while True:
     try:
-        # rename_all_villages()
         master_function()
-        # rename_village(2823, "0000")
-        # get_village_ids(excluded_village_ids)
-        # build_and_upgrade(position_id=39, building_id=16)
-        # build_capital_village()
-        # build_secondary_village()
-        # start_celebration(10000)
-        # train_settlers_and_find_new_village()
     except Exception as e:
         logging.error(f"Error encountered: {e}. Reinitializing driver and checking connections before retrying.")
         driver.quit()

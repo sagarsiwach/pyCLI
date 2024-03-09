@@ -529,9 +529,7 @@ def train_settlers_and_find_new_village():
                 logging.info("Confirmed new village")
                 
                 # Wait for the new village popup and handle it
-                max_attempts = 2
-                attempts = 0
-                while attempts < max_attempts:
+                while True:
                     driver.refresh()  # Refresh the page to check for the popup
                     try:
                         continue_link = WebDriverWait(driver, 5).until(
@@ -541,15 +539,9 @@ def train_settlers_and_find_new_village():
                         logging.info("Clicked on Continue in the new village popup")
                         break  # Exit the loop once the popup is handled
                     except TimeoutException:
-                        attempts += 1
                         logging.info("Waiting for new village popup to appear...")
-                        if attempts == max_attempts:
-                            logging.error("New village popup did not appear after multiple attempts")
-                            break
                         time.sleep(5)  # Wait before refreshing again
-                                
-               
-
+                break
     except Exception as e:
         logging.error(f"Error during training settlers and finding a new village: {e}")
 
@@ -630,7 +622,7 @@ def switch_to_village(village_id):
 
 def master_function():
     global global_village_number
-    max_villages = 100  # Set the maximum number of villages you want
+    max_villages = 10  # Set the maximum number of villages you want
 
     # Build the capital village
     # build_capital_village()
@@ -683,45 +675,18 @@ def master_function():
 def build_secondary_village():
 
     # rename_village()    
-    build_and_upgrade(position_id=26, building_id=15, loop=10, building_name="Main Building")
-    build_and_upgrade(position_id=39, building_id=16, loop=10, building_name="Rally Point")
-    # build_and_upgrade(position_id=40, building_id=33, loop=20, building_name="City Wall")
-    # build_and_upgrade(position_id=25, building_id=19, loop=20, building_name="Barracks")
-    # build_and_upgrade(position_id=33, building_id=22, loop=20, building_name="Academy")
+    build_and_upgrade(position_id=26, building_id=15, loop=20, building_name="Main Building")
+    build_and_upgrade(position_id=39, building_id=16, loop=20, building_name="Rally Point")
+    build_and_upgrade(position_id=40, building_id=33, loop=20, building_name="City Wall")
+    build_and_upgrade(position_id=25, building_id=19, loop=20, building_name="Barracks")
+    build_and_upgrade(position_id=33, building_id=22, loop=20, building_name="Academy")
     build_and_upgrade(position_id=30, building_id=25, loop=20, building_name="Residence")
     build_and_upgrade(position_id=34, building_id=7, loop=10, building_name="Iron Foundry")
     build_and_upgrade(position_id=31, building_id=5, loop=10, building_name="Sawmill")
     build_and_upgrade(position_id=27, building_id=6, loop=10, building_name="Brickworks")
-    # build_and_upgrade(position_id=24, building_id=37, loop=20, building_name="Hero's Mansion")
+    build_and_upgrade(position_id=24, building_id=37, loop=20, building_name="Hero's Mansion")
     build_and_upgrade(position_id=24, building_id=44, loop=1, building_name="Christmas Tree")
-    # build_and_upgrade(position_id=37, building_id=27, loop=20, building_name="Treasury")z
-    
-    
-def rename_all_villages():
-    global global_village_number
-    excluded_ids = []  # Add any village IDs you want to exclude from renaming
-
-    # Fetch the list of all current village IDs, excluding any specified
-    village_ids = get_village_ids(excluded_ids)
-
-    # It's assumed get_village_ids() returns a list of dictionaries with 'id' and 'name' keys
-    # If it only returns a list of IDs, adjust the sorting and access accordingly
-
-    # Sort villages by their IDs (assuming numeric IDs for simplicity)
-    village_ids_sorted = sorted(village_ids, key=lambda x: int(x['id']))
-
-    for index, village in enumerate(village_ids_sorted, start=1):
-        village_id = village['id']
-        # Generate a new name for the village using its index
-        new_village_name = f"{index:04}"
-
-        # Switch to the village by its ID
-        switch_to_village(village_id)
-
-        # Rename the village
-        rename_village(village_id, new_village_name)
-
-        print(f"Renamed village ID {village_id} to {new_village_name}")
+    build_and_upgrade(position_id=37, building_id=27, loop=20, building_name="Treasury")
 
 # Main flow
 initialize_driver()
@@ -732,7 +697,6 @@ login()
 
 while True:
     try:
-        # rename_all_villages()
         master_function()
         # rename_village(2823, "0000")
         # get_village_ids(excluded_village_ids)
