@@ -4,9 +4,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from bs4 import BeautifulSoup
 from selenium.common.exceptions import NoSuchElementException
 import time
 import requests
+import re
 import logging
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
@@ -17,11 +19,14 @@ import json
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+session = requests.Session()
+
+
 # Configuration
 username = "scar"
 password = "fiverr"
 uid = 13  # User ID for attacking and training troops
-excluded_village_ids = ['4382']
+excluded_village_ids = []
 production_loops = 1
 storage_loops = 1
 total_production_done = 0
@@ -122,78 +127,118 @@ def navigate_to_construction_page():
         
         
 
-def build_building(position_id, building_id):
-    try:
-        # Navigate to the Village Center
-        driver.get(f"https://fun.gotravspeed.com/village2.php")
-        logging.info("Navigated to Village Center")
-
-        # Click on the empty position
-        driver.get(f"https://fun.gotravspeed.com/build.php?id={position_id}")
-        logging.info(f"Clicked on empty position {position_id}")
+# def build_building(position_id, building_id, building_name):
+#     try:
+#         logging.info(f"Attempting to build {building_name} (ID: {building_id}) at position {position_id}")
         
-        time.sleep(1)  # Add a short delay to ensure the page is loaded
+#         # Navigate to the Village Center
+#         driver.get(f"https://fun.gotravspeed.com/village2.php")
+#         logging.info("Navigated to Village Center")
 
-        # Find the "Construct buildings" link that matches the build and position ID
-        construct_link = WebDriverWait(driver, 3).until(
-            EC.presence_of_element_located((By.XPATH, f"//a[contains(@href, 'id={position_id}&b={building_id}')]"))
+#         # Scroll to the empty position and click on it
+#         position_element = WebDriverWait(driver, 3).until(EC.element_to_be_clickable((By.ID, f'aid{position_id}')))
+#         driver.execute_script("arguments[0].scrollIntoView();", position_element)
+#         position_element.click()
+#         logging.info(f"Clicked on empty position {position_id}")
+        
+#         # Find the "Construct buildings" link for the specified building using position and building ID
+#         construct_link = WebDriverWait(driver, 3).until(
+#             EC.element_to_be_clickable((By.XPATH, f"//area[@id='a{position_id}']/ancestor::map/following-sibling::div//a[@href='build.php?id={position_id}&gid={building_id}']"))
+#         )
+#         driver.execute_script("arguments[0].scrollIntoView();", construct_link)
+#         construct_link.click()
+#         logging.info(f"Clicked on 'Construct buildings' for {building_name} (ID: {building_id}) at position {position_id}")
+
+#     except Exception as e:
+#         logging.error(f"Error building {building_name} (ID: {building_id}) at position {position_id}: {e}")
+
+# Function to build a building using requests
+
+def build_building(position_id, building_id, building_name):
+    try:
+        logging.info(f"Attempting to build {building_name} (ID: {building_id}) at position {position_id}")
+        
+        # Navigate to the specific position URL
+        position_response = session.get(f"https://fun.gotravspeed.com/build.php?id={position_id}")
+        logging.info(f"Retrieved CSRF token from position {position_id}")
+
+        # Parse the HTML with BeautifulSoup
+        soup = BeautifulSoup(position_response.text, 'html.parser')
+
+        # Extract the csrf token from the response
+        csrf_token_input = soup.find('input', {'name': 'k'})
+        if csrf_token_input is None:
+            logging.error("CSRF token not found in the response")
+            return
+        csrf_token = csrf_token_input['value']
+        logging.info(f"Extracted CSRF token: {csrf_token}")
+
+        # Send a GET request to build the building
+        build_response = session.get(
+            f"https://fun.gotravspeed.com/village2.php?id={position_id}&b={building_id}&k={csrf_token}"
         )
-        construct_link.click()
-        logging.info(f"Clicked on 'Construct buildings' for building {building_id} at position {position_id}")
+        logging.info(f"Build request sent for {building_name} (ID: {building_id}) at position {position_id}")
+
+        if build_response.status_code == 200:
+            logging.info(f"Successfully built {building_name} (ID: {building_id}) at position {position_id}")
+        else:
+            logging.error(f"Failed to build {building_name} (ID: {building_id}) at position {position_id}. Status code: {build_response.status_code}")
+
     except Exception as e:
-        logging.error(f"Error building {building_id} at position {position_id}: {e}")
+        logging.error(f"Error building {building_name} (ID: {building_id}) at position {position_id}: {e}")
 
 
 
 
-def build_and_upgrade(position_id, building_id, loop):
+
+
+
+
+
+
+
+def build_and_upgrade(position_id, building_id, loop, building_name):
     try:
         # Build the building if it doesn't exist
-        build_building(position_id, building_id)
+        build_building(position_id, building_id, building_name)
 
         # Upgrade the building to the target level
         for _ in range(loop):
-            try:
-                upgrade_building(position_id)
-            except Exception as e:
-                logging.error(f"Error during upgrade: {e}. Continuing to next level.")
-                continue
+            is_fully_upgraded = upgrade_building(position_id, building_name)
+            if is_fully_upgraded:
+                break  # Exit the loop if the building is fully upgraded
 
     except Exception as e:
-        logging.error(f"Error encountered during build and upgrade: {e}")
-        
+        logging.error(f"Error encountered during build and upgrade for {building_name}: {e}")
+
         
 
-def upgrade_building(position_id):
+def upgrade_building(position_id, building_name):
     try:
         # Navigate to the specific building page
-        driver.get(f"https://fun.gotravspeed.com/village2.php")
-        time.sleep(0.5)  # Add a short delay to ensure the page is loaded
         driver.get(f"https://fun.gotravspeed.com/build.php?id={position_id}")
         logging.info(f"Navigated to building page for position {position_id}")
 
-        for _ in range(20):
-            # Find the "upgrade to level" link and click it
-            upgrade_link = WebDriverWait(driver, 3).until(
-                EC.element_to_be_clickable((By.XPATH, f"//a[contains(@class, 'build') and contains(@href, 'village2.php?id={position_id}')]"))
-            )
-            upgrade_link.click()
-            logging.info(f"Clicked on upgrade link for position {position_id}")
+        # Check if the building is fully upgraded
+        build_div = WebDriverWait(driver, 3).until(EC.presence_of_element_located((By.ID, "build")))
+        if f"Updated {building_name} Fully" in build_div.text:
+            logging.info(f"{building_name} is fully upgraded.")
+            return True  # Return True if the building is fully upgraded
 
-            # Check if the building is fully upgraded
-            build_div = driver.find_element(By.ID, "build")
-            if "Updated" in build_div.text:
-                logging.info("Building is fully upgraded.")
-                break  # Break out of the loop if the building is fully upgraded
+        # Find the "upgrade to level" link and click it
+        upgrade_link = WebDriverWait(driver, 3).until(
+            EC.element_to_be_clickable((By.XPATH, "//a[contains(@class, 'build') and contains(@href, 'id={position_id}')]"))
+        )
+        upgrade_link.click()
+        logging.info(f"Clicked on upgrade link for {building_name} at position {position_id}")
 
-            # Wait for the upgrade to complete before proceeding to the next level
-            WebDriverWait(driver, 3).until(
-                EC.presence_of_element_located((By.XPATH, "//div[@class='buildDuration']"))
-            )
-            time.sleep(0.5)  # Add a short delay to ensure the upgrade is processed
+        return False  # Return False if the building is not fully upgraded
 
     except Exception as e:
-        logging.error(f"Error upgrading building at position {position_id}: {e}")
+        logging.error(f"Error upgrading {building_name} at position {position_id}: {e}")
+        return False  # Return False in case of an error
+
+
 
 
 def upgrade_resource(position_id):
@@ -243,7 +288,7 @@ def build_and_upgrade_resource(position_id):
         logging.error(f"Error encountered during build and upgrade: {e}")
 
 
-def start_celebration(times=100):
+def start_celebration(times):
     town_hall_id = 35  # Adjust this to the correct ID for your Town Hall
     for _ in range(times):
         try:
@@ -271,45 +316,51 @@ def start_celebration(times=100):
     
     
 def build_capital_village():
-    build_and_upgrade(position_id=26, building_id=15, loop=20)
-    build_and_upgrade_resource(position_id=1)
-    build_and_upgrade_resource(position_id=2)
-    build_and_upgrade_resource(position_id=3)
-    build_and_upgrade_resource(position_id=4)
-    build_and_upgrade_resource(position_id=5)
-    build_and_upgrade_resource(position_id=6)
-    build_and_upgrade_resource(position_id=7)
-    build_and_upgrade_resource(position_id=8)
-    build_and_upgrade_resource(position_id=9)
-    build_and_upgrade_resource(position_id=10)
-    build_and_upgrade_resource(position_id=11)
-    build_and_upgrade_resource(position_id=12)
-    build_and_upgrade_resource(position_id=13)
-    build_and_upgrade_resource(position_id=14)
-    build_and_upgrade_resource(position_id=15)
-    build_and_upgrade_resource(position_id=16)
-    build_and_upgrade_resource(position_id=17)
-    build_and_upgrade_resource(position_id=18)
-    build_and_upgrade(position_id=39, building_id=16, loop=20)
-    build_and_upgrade(position_id=40, building_id=33, loop=20)
-    build_and_upgrade(position_id=25, building_id=19, loop=20)
-    build_and_upgrade(position_id=33, building_id=22, loop=20)
-    build_and_upgrade(position_id=30, building_id=25, loop=20)
-    build_and_upgrade(position_id=29, building_id=13, loop=20)
-    build_and_upgrade(position_id=21, building_id=12, loop=20)
-    build_and_upgrade(position_id=34, building_id=7, loop=10)
-    build_and_upgrade(position_id=31, building_id=5, loop=10)
-    build_and_upgrade(position_id=27, building_id=6, loop=10)
-    build_and_upgrade(position_id=24, building_id=37, loop=20)
-    build_and_upgrade(position_id=23, building_id=44, loop=1)
-    build_and_upgrade(position_id=22, building_id=11, loop=20)
-    build_and_upgrade(position_id=20, building_id=17, loop=20)
-    build_and_upgrade(position_id=19, building_id=20, loop=20)
-    build_and_upgrade(position_id=28, building_id=21, loop=20)
-    build_and_upgrade(position_id=32, building_id=14, loop=20)
-    build_and_upgrade(position_id=35, building_id=24, loop=20)
-    build_and_upgrade(position_id=38, building_id=18, loop=20)
-    build_and_upgrade(position_id=37, building_id=27, loop=20)
+    build_and_upgrade(position_id=26, building_id=15, loop=20, building_name="Main Building")
+    # build_and_upgrade_resource(position_id=1)
+    # build_and_upgrade_resource(position_id=2)
+    # build_and_upgrade_resource(position_id=3)
+    # build_and_upgrade_resource(position_id=4)
+    # build_and_upgrade_resource(position_id=5)
+    # build_and_upgrade_resource(position_id=6)
+    # build_and_upgrade_resource(position_id=7)
+    # build_and_upgrade_resource(position_id=8)
+    # build_and_upgrade_resource(position_id=9)
+    # build_and_upgrade_resource(position_id=10)
+    # build_and_upgrade_resource(position_id=11)
+    # build_and_upgrade_resource(position_id=12)
+    # build_and_upgrade_resource(position_id=13)
+    # build_and_upgrade_resource(position_id=14)
+    # build_and_upgrade_resource(position_id=15)
+    # build_and_upgrade_resource(position_id=16)
+    # build_and_upgrade_resource(position_id=17)
+    # build_and_upgrade_resource(position_id=18)
+    build_and_upgrade(position_id=39, building_id=16, loop=20, building_name="Rally Point")
+    build_and_upgrade(position_id=40, building_id=33, loop=20, building_name="City Wall")
+    build_and_upgrade(position_id=25, building_id=19, loop=20, building_name="Barracks")
+    build_and_upgrade(position_id=33, building_id=22, loop=20, building_name="Academy")
+    build_and_upgrade(position_id=30, building_id=25, loop=20, building_name="Residence")
+    build_and_upgrade(position_id=29, building_id=13, loop=20, building_name="Armory")
+    build_and_upgrade(position_id=21, building_id=12, loop=20, building_name="Smithy")
+    build_and_upgrade(position_id=34, building_id=7, loop=10, building_name="Iron Foundry")
+    build_and_upgrade(position_id=31, building_id=5, loop=10, building_name="Sawmill")
+    build_and_upgrade(position_id=27, building_id=6, loop=10, building_name="Brickworks")
+    build_and_upgrade(position_id=24, building_id=37, loop=20, building_name="Hero's Mansion")
+    build_and_upgrade(position_id=23, building_id=44, loop=1, building_name="Christmas Tree")
+    build_and_upgrade(position_id=22, building_id=11, loop=20, building_name="Granary")
+    build_and_upgrade(position_id=20, building_id=17, loop=20, building_name="Marketplace")
+    build_and_upgrade(position_id=19, building_id=20, loop=20, building_name="Stable")
+    build_and_upgrade(position_id=28, building_id=21, loop=20, building_name="Siege Workshop")
+    build_and_upgrade(position_id=32, building_id=14, loop=20, building_name="Tournament Square")
+    build_and_upgrade(position_id=35, building_id=24, loop=20, building_name="Town Hall")
+    build_and_upgrade(position_id=38, building_id=18, loop=20, building_name="Embassy")
+    build_and_upgrade(position_id=37, building_id=27, loop=20, building_name="Treasury")
+
+    
+    
+    
+    
+    
     
 
 
@@ -375,12 +426,12 @@ def train_settlers_and_find_new_village(driver):
             driver.get(f"https://fun.gotravspeed.com/village3.php?id={village_id}")
             if "building a new village" in driver.page_source:
                 logging.info(f"Found a suitable spot for a new village at ID {village_id}")
-                build_new_village_link = WebDriverWait(driver, 10).until(
+                build_new_village_link = WebDriverWait(driver, 3).until(
                     EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'building a new village')]"))
                 )
                 build_new_village_link.click()
                 logging.info("Clicked on 'building a new village'")
-                WebDriverWait(driver, 10).until(
+                WebDriverWait(driver, 3).until(
                     EC.element_to_be_clickable((By.ID, "btn_ok"))
                 ).click()
                 logging.info("Confirmed new village")
@@ -416,16 +467,16 @@ def switch_to_0000_village():
         
 def rename_village(village_id, village_name):
     # Navigate to the profile page
-    driver.get(f"https://fun.gotravspeed.com/dorf2.php?vid={village_id}")
+    driver.get(f"https://fun.gotravspeed.com/profile.php?vid={village_id}")
 
-    # Click on the "Change village name" link
-    change_name_link = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.XPATH, "//a[contains(text(),'Change village name')]"))
+    # Go to the Profile tab
+    profile_tab_link = WebDriverWait(driver, 3).until(
+        EC.element_to_be_clickable((By.XPATH, "//a[contains(@href, 'profile.php?t=1')]"))
     )
-    change_name_link.click()
+    profile_tab_link.click()
 
     # Wait for the village name input to be clickable
-    village_name_input = WebDriverWait(driver, 10).until(
+    village_name_input = WebDriverWait(driver, 3).until(
         EC.element_to_be_clickable((By.NAME, "dname"))
     )
 
@@ -434,21 +485,33 @@ def rename_village(village_id, village_name):
     village_name_input.send_keys(village_name)
 
     # Click the "ok" button to save the changes
-    ok_button = driver.find_element_by_id("btn_ok")
+    ok_button = WebDriverWait(driver, 3).until(
+        EC.element_to_be_clickable((By.ID, "btn_ok"))
+    )
     ok_button.click()
+
     
 def get_village_ids(excluded_ids):
-    driver.get("https://fun.gotravspeed.com/dorf1.php")
-    village_links = WebDriverWait(driver, 10).until(
-        EC.presence_of_all_elements_located((By.XPATH, "//div[@id='vlist']//a[contains(@href, 'newdid=')]"))
+    driver.get("https://fun.gotravspeed.com/village2.php")
+    village_links = WebDriverWait(driver, 3).until(
+        EC.presence_of_all_elements_located((By.XPATH, "//table[@id='vlist']//td[@class='link']//a[contains(@href, 'vid=')]"))
     )
     village_ids = [link.get_attribute("href").split('=')[-1] for link in village_links]
-    return [vid for vid in village_ids if vid not in excluded_ids]
+    filtered_village_ids = [vid for vid in village_ids if vid not in excluded_ids]
+
+    # Log the list of village IDs
+    logging.info(f"Obtained village IDs: {filtered_village_ids}")
+
+    return filtered_village_ids
+
+
+    
+    
 
 
 def switch_to_village(village_id):
     try:
-        driver.get(f"https://fun.gotravspeed.com/dorf1.php?newdid={village_id}")
+        driver.get(f"https://fun.gotravspeed.com/village2.php?vid={village_id}")
         logging.info(f"Switched to the village with ID {village_id}")
     except Exception as e:
         logging.error(f"Error switching to the village with ID {village_id}: {e}")
@@ -459,18 +522,26 @@ def master_function():
     max_villages = 10  # Set the maximum number of villages you want
 
     # Build the capital village
-    # build_capital_village()
+    build_capital_village()
     
     # Navigate to the capital village and start celebrations
-    # switch_to_village(2823)  # Replace capital_village_id with the actual ID
-    # for _ in range(1):
-    #     start_celebration()
+    switch_to_village(2823)  # Replace capital_village_id with the actual ID
+    for _ in range(1):
+        start_celebration(10)
+        
+    train_settlers_and_find_new_village()
     
 
     while True:
         
+        # Get the list of current village IDs
+        current_village_ids = get_village_ids(excluded_village_ids)
+        
         newest_village_id = current_village_ids[-1]
         switch_to_village(newest_village_id)
+        
+        rename_village(newest_village_id, f"{global_village_number:04}")
+        global_village_number += 1
 
         # Build the secondary village
         build_secondary_village()
@@ -478,17 +549,11 @@ def master_function():
         # Find and settle a new village
         train_settlers_and_find_new_village()
 
-        # Get the list of current village IDs
-        current_village_ids = get_village_ids(excluded_village_ids)
+        
 
         # If the number of villages reaches the limit, break the loop
         if len(current_village_ids) >= max_villages:
             break
-
-        # Switch to the newest village and rename it
-        switch_to_village(newest_village_id)
-        rename_village(newest_village_id, f"{global_village_number:04}")
-        global_village_number += 1
 
 
 
@@ -496,18 +561,18 @@ def master_function():
 def build_secondary_village():
 
     # rename_village()    
-    build_and_upgrade(position_id=26, building_id=15, loop=20)
-    build_and_upgrade(position_id=39, building_id=16, loop=20)
-    build_and_upgrade(position_id=40, building_id=33, loop=20)
-    build_and_upgrade(position_id=25, building_id=19, loop=20)
-    build_and_upgrade(position_id=33, building_id=22, loop=20)
-    build_and_upgrade(position_id=30, building_id=25, loop=20)
-    build_and_upgrade(position_id=34, building_id=7, loop=10)
-    build_and_upgrade(position_id=31, building_id=5, loop=10)
-    build_and_upgrade(position_id=27, building_id=6, loop=10)
-    build_and_upgrade(position_id=24, building_id=37, loop=20)
-    build_and_upgrade(position_id=24, building_id=44, loop=1)
-    build_and_upgrade(position_id=37, building_id=27, loop=20)
+    build_and_upgrade(position_id=26, building_id=15, loop=20, building_name="Main Building")
+    build_and_upgrade(position_id=39, building_id=16, loop=20, building_name="Rally Point")
+    build_and_upgrade(position_id=40, building_id=33, loop=20, building_name="City Wall")
+    build_and_upgrade(position_id=25, building_id=19, loop=20, building_name="Barracks")
+    build_and_upgrade(position_id=33, building_id=22, loop=20, building_name="Academy")
+    build_and_upgrade(position_id=30, building_id=25, loop=20, building_name="Residence")
+    build_and_upgrade(position_id=34, building_id=7, loop=10, building_name="Iron Foundry")
+    build_and_upgrade(position_id=31, building_id=5, loop=10, building_name="Sawmill")
+    build_and_upgrade(position_id=27, building_id=6, loop=10, building_name="Brickworks")
+    build_and_upgrade(position_id=24, building_id=37, loop=20, building_name="Hero's Mansion")
+    build_and_upgrade(position_id=24, building_id=44, loop=1, building_name="Christmas Tree")
+    build_and_upgrade(position_id=37, building_id=27, loop=20, building_name="Treasury")
 
 # Main flow
 initialize_driver()
@@ -519,11 +584,13 @@ login()
 while True:
     try:
         master_function()
+        # rename_village(2823, "0000")
+        # get_village_ids(excluded_village_ids)
         # build_and_upgrade(position_id=39, building_id=16)
         # build_capital_village()
         # build_secondary_village()
         # start_celebration(10000)
-        train_settlers_and_find_new_village()
+        # train_settlers_and_find_new_village()
     except Exception as e:
         logging.error(f"Error encountered: {e}. Reinitializing driver and checking connections before retrying.")
         driver.quit()
