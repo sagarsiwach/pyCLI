@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 from selenium.common.exceptions import NoSuchElementException
 import os
 import time
+from selenium.webdriver.chrome.options import Options
 import requests
 import re
 import logging
@@ -34,17 +35,15 @@ storage_loops = 1
 total_production_done = 0
 total_storage_done = 0
 server_user = "ANDANA"  # or "M16"
-global_village_number = 1  # Used for renaming the secondary villages
+global_village_number = 104  # Used for renaming the secondary villages
 
-# Setup Firefox options
-options = Options()
-options.headless = True
-
-# Function to initialize WebDriver
 def initialize_driver():
     global driver
-    driver = webdriver.Firefox(options=options)
+    options = Options()
+    options.headless = True  # Run in headless mode
+    driver = webdriver.Chrome(options=options)
     logging.info("WebDriver initialized")
+
 
 # Function to check internet connection
 def check_internet_connection():
@@ -470,7 +469,7 @@ def train_settlers_concurrently():
             "sec-fetch-user": "?1",
             "upgrade-insecure-requests": "1"
         }
-        settlers_data = "tf%5B20%5D=3&s1.x=50&s1.y=8"  # Set the quantity of settlers to train
+        settlers_data = "tf%5B30%5D=3&s1.x=50&s1.y=8"  # Set the quantity of settlers to train
         cookies = {c['name']: c['value'] for c in driver.get_cookies()}
 
         with ThreadPoolExecutor(max_workers=1) as executor:
@@ -507,46 +506,81 @@ def build_or_upgrade_resource(position_id, loop):
 
 def train_settlers_and_find_new_village():
     try:
-        train_settlers_concurrently()  # Remove the 'driver' argument
+        train_settlers_concurrently()  # Train 3 settlers
         logging.info("Training 3 Settlers")
-        time.sleep(5)  # Add a delay to ensure settlers are trained
+        time.sleep(1)  # Add a delay to ensure settlers are trained
 
-        # Navigate to the Map and find a suitable spot for the new village
-        driver.get("https://fun.gotravspeed.com/map.php")
-        logging.info("Navigated to Map")
-        for village_id in range(10829, 15000):  # Adjust the range as needed
-            driver.get(f"https://fun.gotravspeed.com/village3.php?id={village_id}")
-            if "building a new village" in driver.page_source:
-                logging.info(f"Found a suitable spot for a new village at ID {village_id}")
-                build_new_village_link = WebDriverWait(driver, 3).until(
-                    EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'building a new village')]"))
-                )
-                build_new_village_link.click()
-                logging.info("Clicked on 'building a new village'")
-                WebDriverWait(driver, 3).until(
-                    EC.element_to_be_clickable((By.ID, "btn_ok"))
-                ).click()
-                logging.info("Confirmed new village")
-                
-                # Wait for the new village popup and handle it
-                max_attempts = 2
-                attempts = 0
-                while attempts < max_attempts:
-                    driver.refresh()  # Refresh the page to check for the popup
-                    try:
-                        continue_link = WebDriverWait(driver, 5).until(
-                            EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), '» continue')]"))
-                        )
-                        continue_link.click()
-                        logging.info("Clicked on Continue in the new village popup")
-                        break  # Exit the loop once the popup is handled
-                    except TimeoutException:
-                        attempts += 1
-                        logging.info("Waiting for new village popup to appear...")
-                        if attempts == max_attempts:
-                            logging.error("New village popup did not appear after multiple attempts")
-                            break
-                        time.sleep(5)  # Wait before refreshing again
+        # Get the current village ID
+        current_village_id = get_current_village_id()
+
+        # Define the search parameters
+        search_range = 30
+        rows_to_search = 30
+
+        # Initialize a flag to indicate if an empty village has been found
+        empty_village_found = False
+
+        # Search in rows below the current village ID
+        for row in range(rows_to_search):
+            village_id = current_village_id + row * 401
+            for offset in range(-search_range, search_range + 1):
+                current_village_id = village_id + offset
+                driver.get(f"https://fun.gotravspeed.com/village3.php?id={current_village_id}")
+                if "building a new village" in driver.page_source:
+                    empty_village_found = True
+                    break  # Exit the inner loop if an empty village is found
+            if empty_village_found:
+                break  # Exit the outer loop if an empty village is found
+
+        # If no empty village is found in rows below, search in rows above the current village ID
+        if not empty_village_found:
+            for row in range(1, rows_to_search + 1):
+                village_id = current_village_id - row * 401
+                for offset in range(-search_range, search_range + 1):
+                    current_village_id = village_id + offset
+                    driver.get(f"https://fun.gotravspeed.com/village3.php?id={current_village_id}")
+                    if "building a new village" in driver.page_source:
+                        empty_village_found = True
+                        break  # Exit the inner loop if an empty village is found
+                if empty_village_found:
+                    break  # Exit the outer loop if an empty village is found
+
+        # Build a new village if an empty spot is found
+        if empty_village_found:
+            build_new_village_link = WebDriverWait(driver, 3).until(
+                EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'building a new village')]"))
+            )
+            build_new_village_link.click()
+            logging.info(f"Found a suitable spot for a new village at ID {current_village_id}")
+            WebDriverWait(driver, 3).until(
+                EC.element_to_be_clickable((By.ID, "btn_ok"))
+            ).click()
+            logging.info("Confirmed new village")
+            
+            # Wait for the new village popup and handle it
+            max_attempts = 2
+            attempts = 0
+            while attempts < max_attempts:
+                driver.refresh()  # Refresh the page to check for the popup
+                try:
+                    continue_link = WebDriverWait(driver, 5).until(
+                        EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), '» continue')]"))
+                    )
+                    continue_link.click()
+                    logging.info("Clicked on Continue in the new village popup")
+                    break  # Exit the loop once the popup is handled
+                except TimeoutException:
+                    attempts += 1
+                    logging.info("Waiting for new village popup to appear...")
+                    if attempts == max_attempts:
+                        logging.error("New village popup did not appear after multiple attempts")
+                        break
+                    time.sleep(5)  # Wait before refreshing again
+        else:
+            logging.info("No suitable spot found in the 30x30 matrix")
+
+    except Exception as e:
+        logging.error(f"Error during training settlers and finding a new village: {e}")
                                 
                
 
@@ -640,7 +674,7 @@ def master_function():
     # for _ in range(1):
     #     start_celebration(5000)
         
-    train_settlers_and_find_new_village()  # Pass the driver object here
+    # train_settlers_and_find_new_village()  # Pass the driver object here
     
 
     while True:
@@ -689,9 +723,9 @@ def build_secondary_village():
     # build_and_upgrade(position_id=25, building_id=19, loop=20, building_name="Barracks")
     # build_and_upgrade(position_id=33, building_id=22, loop=20, building_name="Academy")
     build_and_upgrade(position_id=30, building_id=25, loop=20, building_name="Residence")
-    build_and_upgrade(position_id=34, building_id=7, loop=10, building_name="Iron Foundry")
-    build_and_upgrade(position_id=31, building_id=5, loop=10, building_name="Sawmill")
-    build_and_upgrade(position_id=27, building_id=6, loop=10, building_name="Brickworks")
+    # build_and_upgrade(position_id=34, building_id=7, loop=10, building_name="Iron Foundry")
+    # build_and_upgrade(position_id=31, building_id=5, loop=10, building_name="Sawmill")
+    # build_and_upgrade(position_id=27, building_id=6, loop=10, building_name="Brickworks")
     # build_and_upgrade(position_id=24, building_id=37, loop=20, building_name="Hero's Mansion")
     build_and_upgrade(position_id=24, building_id=44, loop=1, building_name="Christmas Tree")
     # build_and_upgrade(position_id=37, building_id=27, loop=20, building_name="Treasury")z
@@ -726,7 +760,7 @@ def rename_all_villages():
 # Main flow
 initialize_driver()
 # check_internet_connection()
-# check_host()
+check_host()
 accept_cookies()
 login()
 

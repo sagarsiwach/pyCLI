@@ -1,0 +1,33 @@
+To find coordinates (x, y) from a village ID:
+
+�
+=
+⌊
+Village ID
+−
+1
+401
+⌋
+−
+200
+x=⌊ 
+401
+Village ID−1
+​
+ ⌋−200
+�
+=
+(
+Village ID
+−
+1
+)
+m
+o
+d
+ 
+ 
+401
+−
+200
+y=(Village ID−1)mod401−200
