@@ -17,8 +17,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # Configuration
 username = "SCAR"
 password = "fiverr"
-uid = 13  # User ID for attacking and training troops
-excluded_village_ids = ['4382']
+uid = 9  # User ID for attacking and training troops
+excluded_village_ids = ['10829']
 # excluded_village_ids = ['155966', '155967','155964', '156367','155968','155164','155768','4382']
 production_loops = 1100000
 storage_loops = 100000
@@ -413,10 +413,14 @@ while True:
     try:
         # Attack villages and train troops
         # get_villages_attack_and_train(uid, excluded_village_ids)
+        
+        
         # Perform other tasks after attacking and training troops in the villages
-        # get_villages_attack_and_train_multi_uid(uids, excluded_village_ids)
-        increase_production()
-        increase_storage()
+        get_villages_attack_and_train_multi_uid(uids, excluded_village_ids)
+        
+        
+        # increase_production()
+        # increase_storage()
         # train_troops_in_all_villages_concurrently()
     except Exception as e:
         logging.error(f"Error encountered: {e}. Reinitializing driver and checking connections before retrying.")
