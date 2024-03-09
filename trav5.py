@@ -387,24 +387,24 @@ def start_celebration(times):
     
 def build_capital_village():
     build_and_upgrade(position_id=26, building_id=15, loop=20, building_name="Main Building")
-    # build_or_upgrade_resource(position_id=1, loop=10)
-    # build_or_upgrade_resource(position_id=2, loop=10)
-    # build_or_upgrade_resource(position_id=3, loop=10)
-    # build_or_upgrade_resource(position_id=4, loop=10)
-    # build_or_upgrade_resource(position_id=5, loop=10)
-    # build_or_upgrade_resource(position_id=6, loop=10)
-    # build_or_upgrade_resource(position_id=7, loop=10)
-    # build_or_upgrade_resource(position_id=8, loop=10)
-    # build_or_upgrade_resource(position_id=9, loop=10)
-    # build_or_upgrade_resource(position_id=10, loop=10)
-    # build_or_upgrade_resource(position_id=11, loop=10)
-    # build_or_upgrade_resource(position_id=12, loop=10)
-    # build_or_upgrade_resource(position_id=13, loop=10)
-    # build_or_upgrade_resource(position_id=14, loop=10)
-    # build_or_upgrade_resource(position_id=15, loop=10)
-    # build_or_upgrade_resource(position_id=16, loop=10)
-    # build_or_upgrade_resource(position_id=17, loop=10)
-    # build_or_upgrade_resource(position_id=18, loop=10)
+    build_or_upgrade_resource(position_id=1, loop=10)
+    build_or_upgrade_resource(position_id=2, loop=10)
+    build_or_upgrade_resource(position_id=3, loop=10)
+    build_or_upgrade_resource(position_id=4, loop=10)
+    build_or_upgrade_resource(position_id=5, loop=10)
+    build_or_upgrade_resource(position_id=6, loop=10)
+    build_or_upgrade_resource(position_id=7, loop=10)
+    build_or_upgrade_resource(position_id=8, loop=10)
+    build_or_upgrade_resource(position_id=9, loop=10)
+    build_or_upgrade_resource(position_id=10, loop=10)
+    build_or_upgrade_resource(position_id=11, loop=10)
+    build_or_upgrade_resource(position_id=12, loop=10)
+    build_or_upgrade_resource(position_id=13, loop=10)
+    build_or_upgrade_resource(position_id=14, loop=10)
+    build_or_upgrade_resource(position_id=15, loop=10)
+    build_or_upgrade_resource(position_id=16, loop=10)
+    build_or_upgrade_resource(position_id=17, loop=10)
+    build_or_upgrade_resource(position_id=18, loop=10)
     build_and_upgrade(position_id=39, building_id=16, loop=20, building_name="Rally Point")
     build_and_upgrade(position_id=40, building_id=33, loop=20, building_name="City Wall")
     build_and_upgrade(position_id=25, building_id=19, loop=20, building_name="Barracks")
@@ -514,7 +514,7 @@ def train_settlers_and_find_new_village():
         # Navigate to the Map and find a suitable spot for the new village
         driver.get("https://fun.gotravspeed.com/map.php")
         logging.info("Navigated to Map")
-        for village_id in range(10829, 15000):  # Adjust the range as needed
+        for village_id in range(2823, 10000):  # Adjust the range as needed
             driver.get(f"https://fun.gotravspeed.com/village3.php?id={village_id}")
             if "building a new village" in driver.page_source:
                 logging.info(f"Found a suitable spot for a new village at ID {village_id}")
@@ -636,11 +636,11 @@ def master_function():
     # build_capital_village()
     
     # Navigate to the capital village and start celebrations
-    # switch_to_village(10829)  # Replace capital_village_id with the actual ID
+    # switch_to_village(2823)  # Replace capital_village_id with the actual ID
     # for _ in range(1):
-    #     start_celebration(5000)
+    #     start_celebration(10)
         
-    train_settlers_and_find_new_village()  # Pass the driver object here
+    # train_settlers_and_find_new_village()  # Pass the driver object here
     
 
     while True:
@@ -734,7 +734,7 @@ while True:
     try:
         # rename_all_villages()
         master_function()
-        # rename_village(10829, "0000")
+        # rename_village(2823, "0000")
         # get_village_ids(excluded_village_ids)
         # build_and_upgrade(position_id=39, building_id=16)
         # build_capital_village()
