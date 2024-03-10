@@ -27,7 +27,7 @@ session = requests.Session()
 # Configuration
 username = "scar"
 password = "fiverr"
-production_loops = 10000
+production_loops = 0
 storage_loops = 10000
 
 # Setup Firefox options
@@ -37,8 +37,12 @@ options.headless = True
 # Function to initialize WebDriver
 def initialize_driver():
     global driver
+    firefox_profile = webdriver.FirefoxProfile()
+    firefox_profile.set_preference('permissions.default.image', 2)
+    options.profile = firefox_profile
     driver = webdriver.Firefox(options=options)
     logging.info("WebDriver initialized")
+
 
 # Function to check internet connection
 def check_internet_connection():
@@ -132,10 +136,10 @@ def increase_storage(loop_count):
             get_response = session.get("https://fun.gotravspeed.com/buy2.php?t=2")
             # logging.info(f"GET Request to increase storage: {get_response.url}")
             soup = BeautifulSoup(get_response.text, 'html.parser')
-            key = soup.find('input', {'name': 'k'})['value']
+            key = soup.find('input', {'name': 'key'})['value']
 
             # Send a POST request to increase storage
-            data = {'k': key}
+            data = {'selected_res': 4, 'xor': 100, 'key': key}
             post_response = session.post("https://fun.gotravspeed.com/buy2.php?t=2&Shop=done", data=data)
             logging.info(f"Storage Increased")
 
@@ -145,6 +149,7 @@ def increase_storage(loop_count):
             #     logging.error(f"Failed to increase storage. Status code: {post_response.status_code}")
         except Exception as e:
             logging.error(f"Error during storage increase: {e}")
+
 
 
 
