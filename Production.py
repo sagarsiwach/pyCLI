@@ -66,7 +66,7 @@ def check_host():
 # Function to accept cookies
 def accept_cookies():
     try:
-        WebDriverWait(driver, 3).until(EC.element_to_be_clickable((By.ID, "cookie__btn"))).click()
+        WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.ID, "cookie__btn"))).click()
         logging.info("Cookies accepted")
     except Exception as e:
         logging.error(f"Error accepting cookies: {e}")
@@ -110,7 +110,7 @@ def increase_production(loop_count):
             # Send a POST request to increase production
             data = {'selected_res': 4, 'xor': 100, 'key': key}
             post_response = session.post("https://fun.gotravspeed.com/buy2.php?t=0&Shop=done", data=data)
-            logging.info(f"POST Request to increase production: {post_response.url} with data {data}")
+            logging.info(f"Resource Incrased")
 
             # if post_response.status_code == 302:
             #     logging.info("Production increased successfully")
@@ -137,7 +137,7 @@ def increase_storage(loop_count):
             # Send a POST request to increase storage
             data = {'k': key}
             post_response = session.post("https://fun.gotravspeed.com/buy2.php?t=2&Shop=done", data=data)
-            logging.info(f"POST Request to increase storage: {post_response.url} with data {data}")
+            logging.info(f"Storage Increased")
 
             # if post_response.status_code == 302:
             #     logging.info("Storage increased successfully")

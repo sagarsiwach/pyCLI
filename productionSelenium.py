@@ -29,6 +29,8 @@ username = "scar"
 password = "fiverr"
 production_loops = 10000
 storage_loops = 10000
+total_production_done = 0
+total_production_done = 0
 
 # Setup Firefox options
 options = Options()
@@ -237,8 +239,8 @@ while True:
         
         increase_production()
         increase_storage()
-        increase_production_requests(production_loops)
-        increase_storage_requests(storage_loops)
+        # increase_production_requests(production_loops)
+        # increase_storage_requests(storage_loops)
         # rename_all_villages()
         # master_function()
         # rename_village(10829, "0000")
