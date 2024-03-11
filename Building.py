@@ -35,7 +35,7 @@ storage_loops = 1
 total_production_done = 0
 total_storage_done = 0
 server_user = "ANDANA"  # or "M16"
-global_village_number = 197  # Used for renaming the secondary villages
+global_village_number = 296  # Used for renaming the secondary villages
 
 # Setup Firefox options
 options = Options()

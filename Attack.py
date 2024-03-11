@@ -189,7 +189,7 @@ def train_phalanxes_concurrently():
             logging.error(f"Error during Phalanxes training: {response.status_code}")
 
     try:
-        url = "https://fun.gotravspeed.com/build.php?id=25"
+        url = "https://fun.gotravspeed.com/build.php?id=19"
         headers = {
             "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
             "accept-language": "en-US,en;q=0.9",
@@ -204,7 +204,7 @@ def train_phalanxes_concurrently():
             "sec-fetch-user": "?1",
             "upgrade-insecure-requests": "1"
         }
-        phalanxes_data = "tf%5B22%5D=221117636153554570000&s1.x=50&s1.y=8"  # Change the troop ID and amount as needed
+        phalanxes_data = "tf%5B21%5D=221117636153554570000&s1.x=50&s1.y=8"  # Change the troop ID and amount as needed
         cookies = {c['name']: c['value'] for c in driver.get_cookies()}
 
         with ThreadPoolExecutor(max_workers=5) as executor:
@@ -298,8 +298,8 @@ def get_player_villages(uid, excluded_village_ids):
 def attack_village(village_url):
     try:
         driver.get(village_url)
-        max_phalanxes_link = driver.find_element(By.XPATH, "//input[@name='t[22]']/following-sibling::a")
-        max_phalanxes_link.click()  # Click on the link to automatically populate the input field for Phalanxes
+        # max_phalanxes_link = driver.find_element(By.XPATH, "//input[@name='t[21]']/following-sibling::a")
+        # max_phalanxes_link.click()  # Click on the link to automatically populate the input field for Phalanxes
         max_theutates_thunders_link = driver.find_element(By.XPATH, "//input[@name='t[24]']/following-sibling::a")
         max_theutates_thunders_link.click()  # Click on the link to automatically populate the input field for Theutates Thunders
         raid_option = driver.find_element(By.XPATH, "//input[@value='4']")
@@ -309,7 +309,7 @@ def attack_village(village_url):
         confirm_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "btn_ok")))
         confirm_button.click()
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//p[contains(text(), 'Attack of the looting')]")))
-        time.sleep(3)
+        time.sleep(1)
         logging.info(f"Attacked village at {village_url}")
     except Exception as e:
         logging.error(f"Error attacking village at {village_url}: {e}")
@@ -324,7 +324,7 @@ def train_troops():
             logging.error(f"Error during Praetorians training: {response.status_code}")
 
     try:
-        url = "https://fun.gotravspeed.com/build.php?id=36"
+        url = "https://fun.gotravspeed.com/build.php?id=25"
         headers = {
             "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
             "accept-language": "en-US,en;q=0.9",
@@ -339,11 +339,11 @@ def train_troops():
             "sec-fetch-user": "?1",
             "upgrade-insecure-requests": "1"
         }
-        data = "tf%5B26%5D=521117636153554570000&s1.x=50&s1.y=8"
+        data = "tf%5B21%5D=521117636153554570000&s1.x=50&s1.y=8"
         cookies = {c['name']: c['value'] for c in driver.get_cookies()}
 
         with ThreadPoolExecutor(max_workers=10) as executor:
-            futures = [executor.submit(send_train_request) for _ in range(50)]
+            futures = [executor.submit(send_train_request) for _ in range(20)]
             for future in concurrent.futures.as_completed(futures):
                 pass  # You can handle each future's result or exception here if needed
 
@@ -353,9 +353,9 @@ def train_troops():
 # Function to attack a village and then train troops
 def attack_village_and_train_troops(village_url):
     switch_to_0000_village()
-    attack_village(village_url)
-    attack_village(village_url)
     train_troops()
+    attack_village(village_url)
+    # attack_village(village_url)
 
 # Function to get the list of villages, attack 50 villages, do other jobs, then attack another 50 villages
 # Function to get the list of villages, attack 50 villages, do other jobs, then attack another 50 villages
@@ -363,12 +363,12 @@ def get_villages_attack_and_train(uid, excluded_village_ids):
     non_capital_villages = get_player_villages(uid, excluded_village_ids)
     if non_capital_villages:
         random.shuffle(non_capital_villages)  # Shuffle the list of villages
-        village_chunks = [non_capital_villages[i:i + 100] for i in range(0, len(non_capital_villages), 50)]
+        village_chunks = [non_capital_villages[i:i + 100] for i in range(0, len(non_capital_villages), 300)]
         for chunk in village_chunks:
             for village in chunk:
                 attack_village_and_train_troops(village[1])
             # Wait before attacking the next set of 50 villages
-            time.sleep(1)  # Adjust the sleep time as needed
+            time.sleep(0.05)  # Adjust the sleep time as needed
 
 # def get_villages_attack_and_train(uid, excluded_village_ids):
 #     non_capital_villages = get_player_villages(uid, excluded_village_ids)
@@ -388,7 +388,7 @@ def get_villages_attack_and_train_multi_uid(uid_list, excluded_village_ids):
             for village in non_capital_villages:  # Attack all villages in the shuffled list
                 attack_village_and_train_troops(village[1])
             # Wait before attacking the next set of villages for the next player
-            time.sleep(1)  # Adjust the sleep time as needed
+            time.sleep(0.01)  # Adjust the sleep time as needed
 
 
 
@@ -407,7 +407,7 @@ check_host()
 accept_cookies()
 login()
 
-uids = [11,13]
+uids = [9]
 
 while True:
     try:
