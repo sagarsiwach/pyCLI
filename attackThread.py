@@ -10,6 +10,12 @@ import logging
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
 import random
+from concurrent.futures import ThreadPoolExecutor
+import random
+import threading
+import re
+import requests
+from bs4 import BeautifulSoup
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -214,38 +220,76 @@ def get_player_villages(uid, excluded_village_ids):
         return sorted_villages
     except Exception as e:
         logging.error(f"Error getting non-capital villages for player {uid} excluding village IDs {excluded_village_ids}: {e}")
-
-# Function to attack a village
+        
+        
+        
+        
 def attack_village(village_url):
     try:
-        driver.get(village_url)
-        # max_phalanxes_link = driver.find_element(By.XPATH, "//input[@name='t[21]']/following-sibling::a")
-        # max_phalanxes_link.click()  # Click on the link to automatically populate the input field for Phalanxes
-        max_theutates_thunders_link = driver.find_element(By.XPATH, "//input[@name='t[24]']/following-sibling::a")
-        max_theutates_thunders_link.click()  # Click on the link to automatically populate the input field for Theutates Thunders
-        raid_option = driver.find_element(By.XPATH, "//input[@value='4']")
-        raid_option.click()
-        attack_button = driver.find_element(By.ID, "sendbutton")
-        attack_button.click()
-        confirm_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "btn_ok")))
-        confirm_button.click()
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//p[contains(text(), 'Attack of the looting')]")))
-        time.sleep(1)
-        logging.info(f"Attacked village at {village_url}")
-    except Exception as e:
-        logging.error(f"Error attacking village at {village_url}: {e}")
+        # Derive the village ID from the village URL
+        village_id = village_url.split('=')[-1]
 
-# Function to train troops
-def train_troops():
-    def send_train_request():
-        response = requests.post(url, headers=headers, data=data, cookies=cookies)
-        if response.status_code == 200:
-            logging.info("Training Praetorians in the current village")
+        # Define your headers
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.6167.160 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "Accept-Language": "en-GB,en-US;q=0.9,en;q=0.8",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Origin": "https://fun.gotravspeed.com",
+            "Referer": village_url,
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "same-origin",
+            "Sec-Fetch-User": "?1",
+            "Upgrade-Insecure-Requests": "1"
+        }
+
+        # Use cookies from Selenium session
+        cookies = {c['name']: c['value'] for c in driver.get_cookies()}
+
+        # GET request to retrieve the key
+        response = requests.get(village_url, headers=headers, cookies=cookies)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        key = soup.find('input', {'name': 'key'})['value']
+
+        # Construct the data for the POST request
+        data = {
+            'id': village_id,
+            'c': '4',  # Attack: raid
+            't[21]': '5.0000000000000000000000e+18',  # Phalanx
+            't[22]': '0',  # Swordsman
+            't[23]': '0',  # Pathfinder
+            't[24]': '0',  # Theutates Thunder
+            't[25]': '0',  # Druidrider
+            't[26]': '0',  # Haeduan
+            't[27]': '0',  # Battering Ram
+            't[28]': '0',  # Trebuchet
+            't[29]': '0',  # Chief
+            't[30]': '0',  # Settler
+            'key': key
+        }
+
+        # Calculate content length
+        content_length = sum(len(str(v)) for v in data.values()) + len('&'.join(data.keys()))
+
+        # Update headers with content length
+        headers['Content-Length'] = str(content_length)
+
+        # POST request to send troops
+        attack_response = requests.post("https://fun.gotravspeed.com/v2v.php", headers=headers, cookies=cookies, data=data)
+        if attack_response.status_code == 200:
+            print(f"Attacked village with ID {village_id}")
         else:
-            logging.error(f"Error during Praetorians training: {response.status_code}")
+            print(f"Error attacking village with ID {village_id}: {attack_response.status_code}")
 
+    except Exception as e:
+        print(f"Error attacking village with ID {village_id}: {e}")
+
+# Function to train troops without multithreading
+def train_troops():
     try:
-        url = "https://fun.gotravspeed.com/build.php?id=24"
+        url = "https://fun.gotravspeed.com/build.php?id=25"
         headers = {
             "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
             "accept-language": "en-US,en;q=0.9",
@@ -260,14 +304,14 @@ def train_troops():
             "sec-fetch-user": "?1",
             "upgrade-insecure-requests": "1"
         }
+        
         data = "tf%5B21%5D=521117636153554570000&s1.x=50&s1.y=8"
         cookies = {c['name']: c['value'] for c in driver.get_cookies()}
-
-        with ThreadPoolExecutor(max_workers=3) as executor:
-            futures = [executor.submit(send_train_request) for _ in range(6)]
-            for future in concurrent.futures.as_completed(futures):
-                pass  # You can handle each future's result or exception here if needed
-
+        response = requests.post(url, headers=headers, data=data, cookies=cookies)
+        if response.status_code == 200:
+            logging.info("Training Praetorians in the current village")
+        else:
+            logging.error(f"Error during Praetorians training: {response.status_code}")
     except Exception as e:
         logging.error(f"Error during Praetorians training in the current village: {e}")
 
@@ -328,25 +372,34 @@ check_host()
 accept_cookies()
 login()
 
-uids = [9,10]
+uids = [9, 10]
 
-while True:
-    try:
-        # Attack villages and train troops
-        # get_villages_attack_and_train(uid, excluded_village_ids)
-        
-        
-        # Perform other tasks after attacking and training troops in the villages
-        get_villages_attack_and_train_multi_uid(uids, excluded_village_ids)
-        
-        
-        # increase_production()
-        # increase_storage()
-        # train_troops_in_all_villages_concurrently()
-    except Exception as e:
-        logging.error(f"Error encountered: {e}. Reinitializing driver and checking connections before retrying.")
-        driver.quit()
-        initialize_driver()
-        check_internet_connection()
-        check_host()
-        login()
+# Start the attacking thread
+def attack_thread():
+    while True:
+        try:
+            get_villages_attack_and_train_multi_uid(uids, excluded_village_ids)
+        except Exception as e:
+            logging.error(f"Error in attack thread: {e}")
+
+# Start the training threads
+def training_thread():
+    while True:
+        try:
+            train_troops()
+            time.sleep(0.5)
+        except Exception as e:
+            logging.error(f"Error in training thread: {e}")
+
+# Create and start threads
+attack_thread = threading.Thread(target=attack_thread)
+training_threads = [threading.Thread(target=training_thread) for _ in range(9)]
+
+attack_thread.start()
+for t in training_threads:
+    t.start()
+
+# Wait for all threads to complete
+attack_thread.join()
+for t in training_threads:
+    t.join()

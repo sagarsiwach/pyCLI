@@ -761,6 +761,14 @@ def build_secondary_village():
         position_id=24, building_id=44, loop=1, building_name="Christmas Tree"
     )
     # build_and_upgrade(position_id=37, building_id=27, loop=20, building_name="Treasury")z
+    
+    
+def build_ww():
+    
+    build_and_upgrade(
+        position_id=25, building_id=40, loop=1000, building_name="World Wonder"
+    )
+    
 
 
 def rename_all_villages():
@@ -793,7 +801,8 @@ login()
 while True:
     try:
         # rename_all_villages()
-        master_function()
+        # master_function()
+        build_ww()
         # rename_village(10829, "0000")
         # get_village_ids(excluded_village_ids)
         # build_and_upgrade(position_id=39, building_id=16)
