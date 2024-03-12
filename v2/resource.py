@@ -22,7 +22,7 @@ httpx_logger.setLevel(logging.WARNING)
 config = read_config()
 
 # Asynchronous function to increase production
-async def increase_storage_async(loop_count, cookies):
+async def increase_production_async(loop_count, cookies):
     async with httpx.AsyncClient(cookies=cookies) as client:
         start_time = time.time()
         for _ in range(loop_count):
@@ -48,7 +48,7 @@ async def increase_storage_async(loop_count, cookies):
                 logging.error(f"Error during production increase: {e}")
 
 # Asynchronous function to increase storage
-async def increase_production_async(loop_count, cookies):
+async def increase_storage_async(loop_count, cookies):
     async with httpx.AsyncClient(cookies=cookies) as client:
         start_time = time.time()
         for _ in range(loop_count):
@@ -72,6 +72,31 @@ async def increase_production_async(loop_count, cookies):
                 write_config(config)
             except Exception as e:
                 logging.error(f"Error during storage increase: {e}")
+                
+                
+# Asynchronous function to start a large celebration multiple times
+async def start_large_celebration(loop_count, cookies):
+    async with httpx.AsyncClient(cookies=cookies) as client:
+        for _ in range(loop_count):
+            try:
+                # Send a GET request to retrieve the celebration page
+                get_response = await client.get("https://fun.gotravspeed.com/build.php?id=35")
+                soup = BeautifulSoup(get_response.text, 'html.parser')
+
+                # Parse the key for the large celebration
+                celebration_link = soup.find('a', {'class': 'build', 'href': True})
+                if celebration_link:
+                    celebration_url = celebration_link['href']
+                    # logger.info("Starting Large Celebration")
+
+                    # Send a GET request to start the large celebration using the parsed key
+                    await client.get(f"https://fun.gotravspeed.com/{celebration_url}")
+                    logger.info("Large Celebration Started")
+                else:
+                    logger.error("Failed to parse celebration key")
+            except Exception as e:
+                logger.error(f"Error during large celebration: {e}")
+
 
 # Write updated configuration to CSV
 def write_config(config):
