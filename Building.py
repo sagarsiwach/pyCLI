@@ -711,7 +711,7 @@ def master_function():
     global global_village_number
     max_villages = 300  # Set the maximum number of villages you want
     # Build the capital village
-    # build_capital_village()
+    build_capital_village()
     # Navigate to the capital village and start celebrations
     # switch_to_village(10829)  # Replace capital_village_id with the actual ID
     # for _ in range(1):
@@ -801,8 +801,8 @@ login()
 while True:
     try:
         # rename_all_villages()
-        # master_function()
-        build_ww()
+        master_function()
+        # build_ww()
         # rename_village(10829, "0000")
         # get_village_ids(excluded_village_ids)
         # build_and_upgrade(position_id=39, building_id=16)
