@@ -9,9 +9,9 @@ async def main():
 
     # Loop for increasing production and storage
     while True:
+        await increase_storage_async(30000, cookies)
         await increase_production_async(10000, cookies)
-        await start_large_celebration(10000, cookies)
-        # await increase_storage_async(int(config['storage_loops']), cookies)
+        await start_large_celebration(5000, cookies)
         print(f"Production completed: {config['production_completed']}, Storage completed: {config['storage_completed']}")
 
 if __name__ == "__main__":
