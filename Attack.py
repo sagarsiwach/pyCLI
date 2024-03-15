@@ -16,9 +16,9 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 # Configuration
 username = "SCAR"
-password = "fiverr"
-uid = 9  # User ID for attacking and training troops
-excluded_village_ids = ['10829', '151986']
+password = "kabira"
+uids = [9]  # User ID for attacking and training troops
+excluded_village_ids = ['8426']
 # excluded_village_ids = ['155966', '155967','155964', '156367','155968','155164','155768','4382']
 production_loops = 1100000
 storage_loops = 100000
@@ -221,7 +221,7 @@ def attack_village(village_url):
         driver.get(village_url)
         # max_phalanxes_link = driver.find_element(By.XPATH, "//input[@name='t[21]']/following-sibling::a")
         # max_phalanxes_link.click()  # Click on the link to automatically populate the input field for Phalanxes
-        max_theutates_thunders_link = driver.find_element(By.XPATH, "//input[@name='t[24]']/following-sibling::a")
+        max_theutates_thunders_link = driver.find_element(By.XPATH, "//input[@name='t[1]']/following-sibling::a")
         max_theutates_thunders_link.click()  # Click on the link to automatically populate the input field for Theutates Thunders
         raid_option = driver.find_element(By.XPATH, "//input[@value='4']")
         raid_option.click()
@@ -245,7 +245,7 @@ def train_troops():
             logging.error(f"Error during Praetorians training: {response.status_code}")
 
     try:
-        url = "https://fun.gotravspeed.com/build.php?id=24"
+        url = "https://fun.gotravspeed.com/build.php?id=25"
         headers = {
             "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
             "accept-language": "en-US,en;q=0.9",
@@ -260,11 +260,11 @@ def train_troops():
             "sec-fetch-user": "?1",
             "upgrade-insecure-requests": "1"
         }
-        data = "tf%5B21%5D=521117636153554570000&s1.x=50&s1.y=8"
+        data = "tf%5B2%5D=521117636153554570000&s1.x=50&s1.y=8"
         cookies = {c['name']: c['value'] for c in driver.get_cookies()}
 
-        with ThreadPoolExecutor(max_workers=3) as executor:
-            futures = [executor.submit(send_train_request) for _ in range(6)]
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            futures = [executor.submit(send_train_request) for _ in range(150)]
             for future in concurrent.futures.as_completed(futures):
                 pass  # You can handle each future's result or exception here if needed
 
@@ -328,7 +328,6 @@ check_host()
 accept_cookies()
 login()
 
-uids = [9,10]
 
 while True:
     try:

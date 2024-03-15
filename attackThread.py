@@ -22,9 +22,9 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 # Configuration
 username = "SCAR"
-password = "fiverr"
-uid = 9  # User ID for attacking and training troops
-excluded_village_ids = ['10829', '151986']
+password = "kabira"
+uids = [9]  # User ID for attacking and training troops
+excluded_village_ids = ['8426']
 # excluded_village_ids = ['155966', '155967','155964', '156367','155968','155164','155768','4382']
 production_loops = 1100000
 storage_loops = 100000
@@ -257,16 +257,16 @@ def attack_village(village_url):
         data = {
             'id': village_id,
             'c': '4',  # Attack: raid
-            't[21]': '5.0000000000000000000000e+18',  # Phalanx
-            't[22]': '0',  # Swordsman
-            't[23]': '0',  # Pathfinder
-            't[24]': '0',  # Theutates Thunder
-            't[25]': '0',  # Druidrider
-            't[26]': '0',  # Haeduan
-            't[27]': '0',  # Battering Ram
-            't[28]': '0',  # Trebuchet
-            't[29]': '0',  # Chief
-            't[30]': '0',  # Settler
+            't[1]': '5.0000000000000000000000e+21',  # Phalanx
+            't[2]': '0',  # Swordsman
+            't[3]': '0',  # Pathfinder
+            't[4]': '0',  # Theutates Thunder
+            't[5]': '0',  # Druidrider
+            't[6]': '0',  # Haeduan
+            't[7]': '0',  # Battering Ram
+            't[8]': '0',  # Trebuchet
+            't[9]': '0',  # Chief
+            't[10]': '0',  # Settler
             'key': key
         }
 
@@ -305,7 +305,7 @@ def train_troops():
             "upgrade-insecure-requests": "1"
         }
         
-        data = "tf%5B21%5D=521117636153554570000&s1.x=50&s1.y=8"
+        data = "tf%5B2%5D=521117636153554570000&s1.x=50&s1.y=8"
         cookies = {c['name']: c['value'] for c in driver.get_cookies()}
         response = requests.post(url, headers=headers, data=data, cookies=cookies)
         if response.status_code == 200:
@@ -314,6 +314,7 @@ def train_troops():
             logging.error(f"Error during Praetorians training: {response.status_code}")
     except Exception as e:
         logging.error(f"Error during Praetorians training in the current village: {e}")
+    time.sleep(0.05)
 
 # Function to attack a village and then train troops
 def attack_village_and_train_troops(village_url):
@@ -372,7 +373,6 @@ check_host()
 accept_cookies()
 login()
 
-uids = [9, 10]
 
 # Start the attacking thread
 def attack_thread():
@@ -387,13 +387,14 @@ def training_thread():
     while True:
         try:
             train_troops()
-            time.sleep(0.5)
+            time.sleep(0.05)
         except Exception as e:
             logging.error(f"Error in training thread: {e}")
 
 # Create and start threads
 attack_thread = threading.Thread(target=attack_thread)
-training_threads = [threading.Thread(target=training_thread) for _ in range(9)]
+for _ in range (30):
+    training_threads = [threading.Thread(target=training_thread) for _ in range(6)]
 
 attack_thread.start()
 for t in training_threads:

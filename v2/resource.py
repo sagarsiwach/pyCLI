@@ -33,17 +33,16 @@ async def increase_production_async(loop_count, cookies):
                 key = soup.find('input', {'name': 'key'})['value']
 
                 # Send a POST request to increase production
-                data = {'selected_res': 4, 'xor': 100, 'key': key}
+                data = {
+                    'selected_res': 4,
+                    'g-recaptcha-response': 'xxxx',
+                    'xor': 100,
+                    'key': key
+                }
                 post_response = await client.post("https://fun.gotravspeed.com/buy2.php?t=0&Shop=done", data=data)
                 logger.info("Resource Increased")
 
-                # Update the CSV with loop progress and speed
-                config['production_completed'] = str(int(config['production_completed']) + 1)
-                elapsed_time = time.time() - start_time
-                config['executions_per_second'] = str(1 / elapsed_time)
-                config['executions_per_minute'] = str(60 / elapsed_time)
-                config['executions_per_hour'] = str(3600 / elapsed_time)
-                write_config(config)
+                
             except Exception as e:
                 logging.error(f"Error during production increase: {e}")
 
@@ -59,17 +58,16 @@ async def increase_storage_async(loop_count, cookies):
                 key = soup.find('input', {'name': 'key'})['value']
 
                 # Send a POST request to increase storage
-                data = {'selected_res': 4, 'xor': 100, 'key': key}
+                data = {
+                    'selected_res': 4,
+                    'g-recaptcha-response': 'xxxx',
+                    'xor': 100,
+                    'key': key
+                }
                 post_response = await client.post("https://fun.gotravspeed.com/buy2.php?t=2&Shop=done", data=data)
                 logger.info("Storage Increased")
 
-                # Update the CSV with loop progress and speed
-                config['storage_completed'] = str(int(config['storage_completed']) + 1)
-                elapsed_time = time.time() - start_time
-                config['executions_per_second'] = str(1 / elapsed_time)
-                config['executions_per_minute'] = str(60 / elapsed_time)
-                config['executions_per_hour'] = str(3600 / elapsed_time)
-                write_config(config)
+              
             except Exception as e:
                 logging.error(f"Error during storage increase: {e}")
                 
