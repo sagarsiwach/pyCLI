@@ -472,6 +472,32 @@ def get_village_ids(excluded_ids):
     return [vid for vid in village_ids if vid not in excluded_ids]
 
 
+def start_celebration(times):
+    town_hall_id = 35  # Adjust this to the correct ID for your Town Hall
+    for _ in range(times):
+        try:
+            switch_to_village(8426)
+            # Navigate to the Town Hall
+            driver.get(f"https://fun.gotravspeed.com/build.php?id={town_hall_id}")
+            logging.info("Navigated to Town Hall")
+
+            # Start the Large Celebration
+            large_celebration_link = WebDriverWait(driver, 3).until(
+                EC.element_to_be_clickable((By.XPATH, "//a[contains(@href, 'a=2')]"))
+            )
+            large_celebration_link.click()
+            logging.info("Started Large Celebration")
+
+            # Wait for the celebration to be acknowledged before starting the next one
+            WebDriverWait(driver, 3).until(
+                EC.presence_of_element_located((By.XPATH, "//p[contains(text(), 'Updated Town Hall Fully')]"))
+            )
+
+        except Exception as e:
+            logging.error(f"Error during celebration: {e}")
+            # Handle the error appropriately (e.g., re-login, retry, etc.)
+
+
 def switch_to_village(village_id):
     try:
         driver.get(f"https://fun.gotravspeed.com/dorf1.php?newdid={village_id}")

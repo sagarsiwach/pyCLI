@@ -27,7 +27,7 @@ session = requests.Session()
 
 # Configuration
 username = "scar"
-password = "fiverr"
+password = "kabira"
 uid = 13  # User ID for attacking and training troops
 excluded_village_ids = []
 production_loops = 1
@@ -35,7 +35,7 @@ storage_loops = 1
 total_production_done = 0
 total_storage_done = 0
 server_user = "ANDANA"  # or "M16"
-global_village_number = 296  # Used for renaming the secondary villages
+global_village_number = 305  # Used for renaming the secondary villages
 
 # Setup Firefox options
 options = Options()
@@ -96,31 +96,6 @@ def accept_cookies():
         logging.error(f"Error accepting cookies: {e}")
 
 
-# Function to log in
-# Function to log in
-# def login():
-#     try:
-#         driver.get("https://www.gotravspeed.com")
-#         WebDriverWait(driver, 3).until(EC.presence_of_element_located((By.ID, "name"))).send_keys(username)
-#         driver.find_element(By.ID, "password").send_keys(password)
-#         driver.find_element(By.ID, "password").send_keys(Keys.RETURN)
-#         WebDriverWait(driver, 3).until(EC.element_to_be_clickable((By.XPATH, "//h2/font[contains(text(),'Fun')]/ancestor::div[1]"))).click()
-
-#         # Select the server user
-#         if server_user == "DRAVAZ":
-#             WebDriverWait(driver, 3).until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Login as DRAVAZ')]"))).click()
-#         elif server_user == "M16":
-#             WebDriverWait(driver, 3).until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Login as M16')]"))).click()
-#         else:
-#             raise ValueError(f"Invalid server user: {server_user}")
-
-#         logging.info(f"Logged in successfully as {server_user}")
-#     except Exception as e:
-#         logging.error(f"Error during login: {e}")
-#         check_internet_connection()
-#         check_host()
-
-
 def login():
     while True:
         try:
@@ -154,67 +129,6 @@ def navigate_to_construction_page():
         logging.info("Navigated to construction page and enabled build mode")
     except Exception as e:
         logging.error(f"Error navigating to construction page: {e}")
-
-
-# def build_building(position_id, building_id, building_name):
-#     try:
-#         logging.info(f"Attempting to build {building_name} (ID: {building_id}) at position {position_id}")
-
-#         # Navigate to the Village Center
-#         driver.get(f"https://fun.gotravspeed.com/village2.php")
-#         logging.info("Navigated to Village Center")
-
-#         # Scroll to the empty position and click on it
-#         position_element = WebDriverWait(driver, 3).until(EC.element_to_be_clickable((By.ID, f'aid{position_id}')))
-#         driver.execute_script("arguments[0].scrollIntoView();", position_element)
-#         position_element.click()
-#         logging.info(f"Clicked on empty position {position_id}")
-
-#         # Find the "Construct buildings" link for the specified building using position and building ID
-#         construct_link = WebDriverWait(driver, 3).until(
-#             EC.element_to_be_clickable((By.XPATH, f"//area[@id='a{position_id}']/ancestor::map/following-sibling::div//a[@href='build.php?id={position_id}&gid={building_id}']"))
-#         )
-#         driver.execute_script("arguments[0].scrollIntoView();", construct_link)
-#         construct_link.click()
-#         logging.info(f"Clicked on 'Construct buildings' for {building_name} (ID: {building_id}) at position {position_id}")
-
-#     except Exception as e:
-#         logging.error(f"Error building {building_name} (ID: {building_id}) at position {position_id}: {e}")
-
-# Function to build a building using requests
-
-# def build_building(position_id, building_id, building_name):
-#     try:
-#         logging.info(f"Attempting to build {building_name} (ID: {building_id}) at position {position_id}")
-
-#         # Navigate to the specific position URL
-#         position_response = session.get(f"https://fun.gotravspeed.com/build.php?id={position_id}")
-#         logging.info(f"Retrieved CSRF token from position {position_id}")
-
-#         # Parse the HTML with BeautifulSoup
-#         soup = BeautifulSoup(position_response.text, 'html.parser')
-
-#         # Extract the csrf token from the response
-#         csrf_token_input = soup.find('input', {'name': 'k'})
-#         if csrf_token_input is None:
-#             logging.error("CSRF token not found in the response")
-#             return
-#         csrf_token = csrf_token_input['value']
-#         logging.info(f"Extracted CSRF token: {csrf_token}")
-
-#         # Send a GET request to build the building
-#         build_response = session.get(
-#             f"https://fun.gotravspeed.com/village2.php?id={position_id}&b={building_id}&k={csrf_token}"
-#         )
-#         logging.info(f"Build request sent for {building_name} (ID: {building_id}) at position {position_id}")
-
-#         if build_response.status_code == 200:
-#             logging.info(f"Successfully built {building_name} (ID: {building_id}) at position {position_id}")
-#         else:
-#             logging.error(f"Failed to build {building_name} (ID: {building_id}) at position {position_id}. Status code: {build_response.status_code}")
-
-#     except Exception as e:
-#         logging.error(f"Error building {building_name} (ID: {building_id}) at position {position_id}: {e}")
 
 
 def build_building(position_id, building_id, building_name):
@@ -272,32 +186,6 @@ def build_and_upgrade(position_id, building_id, loop, building_name):
         )
 
 
-# def upgrade_building(position_id, building_name):
-#     try:
-#         # Navigate to the specific building page
-#         driver.get(f"https://fun.gotravspeed.com/build.php?id={position_id}")
-#         logging.info(f"Navigated to building page for position {position_id}")
-
-#         # Check if the building is fully upgraded
-#         build_div = WebDriverWait(driver, 3).until(EC.presence_of_element_located((By.ID, "build")))
-#         if f"Updated {building_name} Fully" in build_div.text:
-#             logging.info(f"{building_name} is fully upgraded.")
-#             return True  # Return True if the building is fully upgraded
-
-#         # Find the "upgrade to level" link and click it
-#         upgrade_link = WebDriverWait(driver, 3).until(
-#             EC.element_to_be_clickable((By.XPATH, "//a[contains(@class, 'build') and contains(@href, 'id={position_id}')]"))
-#         )
-#         upgrade_link.click()
-#         logging.info(f"Clicked on upgrade link for {building_name} at position {position_id}")
-
-#         return False  # Return False if the building is not fully upgraded
-
-#     except Exception as e:
-#         logging.error(f"Error upgrading {building_name} at position {position_id}: {e}")
-#         return False  # Return False in case of an error
-
-
 def upgrade_building(position_id, building_name):
     try:
         # Extract cookies from Selenium and set them in the requests session
@@ -332,74 +220,7 @@ def upgrade_building(position_id, building_name):
         return False  # Return False in case of an error
 
 
-def upgrade_resource(position_id):
-    try:
-        # Navigate to the specific building page
-        driver.get(f"https://fun.gotravspeed.com/village1.php")
-        time.sleep(0.5)  # Add a short delay to ensure the page is loaded
-        driver.get(f"https://fun.gotravspeed.com/build.php?id={position_id}")
-        logging.info(f"Navigated to building page for position {position_id}")
-        for _ in range(20):
-            time.sleep(0.5)  # Add a short delay to ensure the page is loaded
-            # Find the "upgrade to level" link and click it
-            upgrade_link = WebDriverWait(driver, 3).until(
-                EC.element_to_be_clickable(
-                    (By.XPATH, "//p[@id='contract']/a[contains(@class, 'build')]")
-                )
-            )
-            upgrade_link.click()
-            logging.info(f"Clicked on upgrade link for position {position_id}")
-            # Check if the building is fully upgraded
-            build_div = driver.find_element(By.ID, "build")
-            if "Updated" in build_div.text:
-                logging.info("Building is fully upgraded.")
-                break  # Break out of the loop if the building is fully upgraded
-            # Wait for the upgrade to complete before proceeding to the next level
-            WebDriverWait(driver, 3).until(
-                EC.presence_of_element_located(
-                    (By.XPATH, "//div[@class='buildDuration']")
-                )
-            )
-            time.sleep(0.5)  # Add a short delay to ensure the upgrade is processed
-    except Exception as e:
-        logging.error(f"Error upgrading building at position {position_id}: {e}")
 
-
-def build_and_upgrade_resource(position_id):
-    try:
-        for _ in range(10):
-            try:
-                upgrade_resource(position_id)
-            except Exception as e:
-                logging.error(f"Error during upgrade: {e}. Continuing to next level.")
-                continue
-    except Exception as e:
-        logging.error(f"Error encountered during build and upgrade: {e}")
-
-
-def start_celebration(times):
-    town_hall_id = 35  # Adjust this to the correct ID for your Town Hall
-    switch_to_village(10829)  # Replace capital_village_id with the actual ID
-    for _ in range(times):
-        try:
-            # Navigate to the Town Hall
-            driver.get(f"https://fun.gotravspeed.com/build.php?id={town_hall_id}")
-            logging.info("Navigated to Town Hall")
-            # Start the Large Celebration
-            large_celebration_link = WebDriverWait(driver, 3).until(
-                EC.element_to_be_clickable((By.XPATH, "//a[contains(@href, 'a=2')]"))
-            )
-            large_celebration_link.click()
-            logging.info("Started Large Celebration")
-            # Wait for the celebration to be acknowledged before starting the next one
-            WebDriverWait(driver, 3).until(
-                EC.presence_of_element_located(
-                    (By.XPATH, "//p[contains(text(), 'Updated Town Hall Fully')]")
-                )
-            )
-        except Exception as e:
-            logging.error(f"Error during celebration: {e}")
-            # Handle the error appropriately (e.g., re-login, retry, etc.)
 
 
 def build_capital_village():
@@ -509,7 +330,7 @@ def train_settlers_concurrently():
             "upgrade-insecure-requests": "1",
         }
         settlers_data = (
-            "tf%5B30%5D=3&s1.x=50&s1.y=8"  # Set the quantity of settlers to train
+            "tf%5B10%5D=3&s1.x=50&s1.y=8"  # Set the quantity of settlers to train
         )
         cookies = {c["name"]: c["value"] for c in driver.get_cookies()}
         with ThreadPoolExecutor(max_workers=1) as executor:
@@ -551,34 +372,8 @@ def build_or_upgrade_resource(position_id, loop):
         logging.error(f"Error upgrading resource at position {position_id}: {e}")
 
 
-def train_settlers_and_find_new_village(capital_village_id, start_radius=1, max_radius=25):
+def train_settlers_and_find_new_village(capital_village_id, start_radius=11, max_radius=25):
     try:
-        # # Navigate to the Residence page to check culture points
-        # driver.get(f"https://fun.gotravspeed.com/build.php?id=30&t=1")
-        
-        # # Wait for the page to fully load by waiting for a specific element to be present
-        # WebDriverWait(driver, 3).until(
-        #     EC.presence_of_element_located((By.XPATH, "//b[contains(text(), 'culture points')]"))
-        # )
-
-        # # Now that the page has loaded, obtain the page source
-        # page_source = driver.page_source
-        
-        # # Use regular expressions to extract the current and required culture points
-        # current_cp_match = re.search(r"You currently have <b>(\d+)</b> culture points", page_source)
-        # required_cp_match = re.search(r"The establishment of a new village or occupation requires <b>(\d+)</b> culture points", page_source)
-        
-        # if current_cp_match and required_cp_match:
-        #     current_cp = int(current_cp_match.group(1))
-        #     required_cp = int(required_cp_match.group(1))
-        #     celebrations_needed = max(0, math.ceil((required_cp - current_cp) / 2000))
-        # else:
-        #     logging.warning("Could not find culture points on the page. Skipping celebration.")
-        #     celebrations_needed = 0
-
-        # # Navigate to the capital village and start celebrations
-        # # switch_to_village(capital_village_id)  # Uncomment and replace with your function to switch village
-        # if celebrations_needed > 0:
 
         # Train settlers and find a new village
         train_settlers_concurrently()
@@ -706,17 +501,43 @@ def switch_to_village(village_id):
 # ==============================================
 # ==============================================
 
+def start_celebration(times):
+    town_hall_id = 35  # Adjust this to the correct ID for your Town Hall
+    for _ in range(times):
+        try:
+            switch_to_village(8426)
+            # Navigate to the Town Hall
+            driver.get(f"https://fun.gotravspeed.com/build.php?id={town_hall_id}")
+            logging.info("Navigated to Town Hall")
+
+            # Start the Large Celebration
+            large_celebration_link = WebDriverWait(driver, 3).until(
+                EC.element_to_be_clickable((By.XPATH, "//a[contains(@href, 'a=2')]"))
+            )
+            large_celebration_link.click()
+            logging.info("Started Large Celebration")
+
+            # Wait for the celebration to be acknowledged before starting the next one
+            WebDriverWait(driver, 3).until(
+                EC.presence_of_element_located((By.XPATH, "//p[contains(text(), 'Updated Town Hall Fully')]"))
+            )
+
+        except Exception as e:
+            logging.error(f"Error during celebration: {e}")
+            # Handle the error appropriately (e.g., re-login, retry, etc.)
+
+
 
 def master_function():
     global global_village_number
     max_villages = 300  # Set the maximum number of villages you want
     # Build the capital village
-    build_capital_village()
+    # build_capital_village()
     # Navigate to the capital village and start celebrations
     # switch_to_village(10829)  # Replace capital_village_id with the actual ID
     # for _ in range(1):
     #     start_celebration(3000)
-    # train_settlers_and_find_new_village()  # Pass the driver object here
+    # train_settlers_and_find_new_village(8426)  # Pass the driver object here
     while True:
         # Get the list of current village IDs
         current_village_ids = get_village_ids(excluded_village_ids)
@@ -727,8 +548,8 @@ def master_function():
         # Build the secondary village
         build_secondary_village()
         # Find and settle a new village
-        train_settlers_and_find_new_village(10829)  # Pass the driver object here
-        start_celebration(100)  # Uncomment and replace with your function to start celebration
+        train_settlers_and_find_new_village(8426)  # Pass the driver object here
+        # start_celebration(100)  # Uncomment and replace with your function to start celebration
         # If the number of villages reaches the limit, break the loop
         if len(current_village_ids) >= max_villages:
             break
