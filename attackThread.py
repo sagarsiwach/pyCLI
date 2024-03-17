@@ -260,7 +260,7 @@ def attack_village(village_url):
             'id': village_id,
             'c': '4',  # Attack: raid
             't[1]': '0',  # Phalanx
-            't[2]': '15.0000000000000000000000e+21',  # Swordsman
+            't[2]': '20.0000000000000000000000e+21',  # Swordsman
             't[3]': '0',  # Pathfinder
             't[4]': '0',  # Theutates Thunder
             't[5]': '0',  # Druidrider
@@ -405,7 +405,7 @@ def training_thread():
 
 # Create and start threads
 attack_thread = threading.Thread(target=attack_thread)
-training_threads = [threading.Thread(target=training_thread) for _ in range(15)]
+training_threads = [threading.Thread(target=training_thread) for _ in range(30)]
 
 attack_thread.start()
 for t in training_threads:

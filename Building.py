@@ -27,7 +27,7 @@ session = requests.Session()
 
 # Configuration
 username = "scar"
-password = "kabira"
+password = "fiverr"
 uid = 13  # User ID for attacking and training troops
 excluded_village_ids = []
 production_loops = 1
@@ -621,8 +621,9 @@ login()
 
 while True:
     try:
+        build_capital_village()
         # rename_all_villages()
-        master_function()
+        # master_function()
         # build_ww()
         # rename_village(10829, "0000")
         # get_village_ids(excluded_village_ids)

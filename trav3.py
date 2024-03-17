@@ -123,57 +123,20 @@ def attack_village(village_url):
 
 
 # Function to train troops
-# def train_troops():
-#     try:
-#         driver.get("https://fun.gotravspeed.com/build.php?id=25")
-#         WebDriverWait(driver, 3).until(EC.visibility_of_element_located((By.XPATH, "//tr[1]/td[3]/a"))).click()
-#         train_button = driver.find_element(By.ID, "btn_train")
-#         for _ in range(30):  # Click the train button 30 times
-#             train_button.click()
-#             time.sleep(0.1)  # Adding a short delay to ensure the server registers each click
-#         logging.info("Training Praetorians in the current village")
-#     except Exception as e:
-#         logging.error(f"Error during Praetorians training in the current village: {e}")
-        
-
-        # Function to train troops
-
 def train_troops():
-    def send_train_request():
-        response = requests.post(url, headers=headers, data=data, cookies=cookies)
-        if response.status_code == 200:
-            logging.info("Training Praetorians in the current village")
-        else:
-            logging.error(f"Error during Praetorians training: {response.status_code}")
-
     try:
-        url = "https://fun.gotravspeed.com/build.php?id=19"
-        headers = {
-            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-            "accept-language": "en-US,en;q=0.9",
-            "cache-control": "max-age=0",
-            "content-type": "application/x-www-form-urlencoded",
-            "sec-ch-ua": "\"Chromium\";v=\"122\", \"Not(A:Brand\";v=\"24\", \"Google Chrome\";v=\"122\"",
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": "\"Windows\"",
-            "sec-fetch-dest": "document",
-            "sec-fetch-mode": "navigate",
-            "sec-fetch-site": "same-origin",
-            "sec-fetch-user": "?1",
-            "upgrade-insecure-requests": "1"
-        }
-        data = "tf%5B24%5D=221117636153554570000&s1.x=50&s1.y=8"
-        cookies = {c['name']: c['value'] for c in driver.get_cookies()}
-
-        with ThreadPoolExecutor(max_workers=5) as executor:
-            futures = [executor.submit(send_train_request) for _ in range(10)]
-            for future in concurrent.futures.as_completed(futures):
-                pass  # You can handle each future's result or exception here if needed
-
+        driver.get("https://fun.gotravspeed.com/build.php?id=25")
+        WebDriverWait(driver, 3).until(EC.visibility_of_element_located((By.XPATH, "//tr[1]/td[3]/a"))).click()
+        train_button = driver.find_element(By.ID, "btn_train")
+        for _ in range(30):  # Click the train button 30 times
+            train_button.click()
+            time.sleep(0.1)  # Adding a short delay to ensure the server registers each click
+        logging.info("Training Praetorians in the current village")
     except Exception as e:
         logging.error(f"Error during Praetorians training in the current village: {e}")
+        
 
-
+        Function to train troops
 
 
 # Function to attack a village and then train troops

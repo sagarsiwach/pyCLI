@@ -24,7 +24,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 # Configuration
 username = "SCAR"
-password = "kabira"
+password = "fiverr"
 uid = 9  # User ID for attacking and training troops
 uids = [8]
 excluded_village_ids = []
@@ -310,6 +310,53 @@ def train_troops():
 
 
 
+async def send_reinforcement(village_url):
+    try:
+        village_id = village_url.split('=')[-1]
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.6167.160 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "Accept-Language": "en-GB,en-US;q=0.9,en;q=0.8",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Origin": "https://fun.gotravspeed.com",
+            "Referer": village_url,
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "same-origin",
+            "Sec-Fetch-User": "?1",
+            "Upgrade-Insecure-Requests": "1"
+        }
+        cookies = {c['name']: c['value'] for c in driver.get_cookies()}
+
+        async with httpx.AsyncClient() as client:
+            response = await client.get(village_url, headers=headers, cookies=cookies)
+            soup = BeautifulSoup(response.text, 'html.parser')
+            key = soup.find('input', {'name': 'key'})['value']
+
+            data = {
+                'id': village_id,
+                'c': '2',  # Attack: raid
+                't[1]': '0',  # Phalanx
+                't[2]': '0',  # Swordsman
+                't[3]': '0',  # Pathfinder
+                't[4]': '0',  # Theutates Thunder
+                't[5]': '0',  # Druidrider
+                't[6]': '5.0000000000000000000000e+21',  # Haeduan
+                't[7]': '0',  # Battering Ram
+                't[8]': '0',  # Trebuchet
+                't[9]': '0',  # Chief
+                't[0]': '0',  # Settler
+                'key': key
+            }
+
+            attack_response = await client.post("https://fun.gotravspeed.com/v2v.php", headers=headers, cookies=cookies, data=data)
+            if attack_response.status_code == 200:
+                print(f"Attacked village with ID {village_id}")
+            else:
+                print(f"Error attacking village with ID {village_id}: {attack_response.status_code}")
+    except Exception as e:
+        print(f"Error attacking village with ID {village_id}: {e}")
 
 
 
@@ -379,7 +426,8 @@ async def main():
 
     while True:
         try:
-            await get_villages_attack_and_train_multi_uid(uids, excluded_village_ids)
+            send_reinforcement("https://fun.gotravspeed.com/village3.php?id=157173")
+            # await get_villages_attack_and_train_multi_uid(uids, excluded_village_ids)
         except Exception as e:
             logging.error(f"Error in attack loop: {e}")
 
