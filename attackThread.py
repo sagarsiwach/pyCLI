@@ -25,7 +25,7 @@ username = "SCAR"
 password = "fiverr"
 uid = 9  # User ID for attacking and training troops
 uids = [9]
-excluded_village_ids = ['8426']
+excluded_village_ids = ['4431']
 
 # excluded_village_ids = ['155966', '155967','155964', '156367','155968','155164','155768','4382']
 production_loops = 1100000
@@ -373,7 +373,7 @@ def get_villages_attack_and_train_multi_uid(uid_list, excluded_village_ids):
 # Function to switch to the 0000 village
 def switch_to_0000_village():
     try:
-        driver.get("https://fun.gotravspeed.com/village1.php?vid=5231")
+        driver.get("https://fun.gotravspeed.com/village1.php?vid=4431")
         logging.info("Switched to the 0000 village")
     except Exception as e:
         logging.error(f"Error switching to the 0000 village: {e}")

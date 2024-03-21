@@ -27,7 +27,7 @@ session = requests.Session()
 
 # Configuration
 username = "scar"
-password = "kabira"
+password = "satkabir"
 uid = 13  # User ID for attacking and training troops
 excluded_village_ids = []
 production_loops = 1
@@ -530,7 +530,7 @@ def start_celebration(times):
 
 def master_function():
     global global_village_number
-    max_villages = 300  # Set the maximum number of villages you want
+    max_villages = 500  # Set the maximum number of villages you want
     # Build the capital village
     # build_capital_village()
     # Navigate to the capital village and start celebrations
