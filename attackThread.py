@@ -209,19 +209,18 @@ def train_troops():
             "sec-fetch-user": "?1",
             "upgrade-insecure-requests": "1"
         }
+
+
+        
         data = "tf%5B3%5D=521117636153554570000&s1.x=50&s1.y=8"
         cookies = {c['name']: c['value'] for c in driver.get_cookies()}
-
-        for _ in range(300):  # Train troops 300 times
-            response = requests.post(url, headers=headers, data=data, cookies=cookies)
-            if response.status_code != 200:
-                logging.error(f"Error during Praetorians training: {response.status_code}")
-
-        logging.info("Trained Praetorians 300 times in the current village")  # Log after training 300 times
-
+        response = requests.post(url, headers=headers, data=data, cookies=cookies)
+        if response.status_code == 200:
+            logging.info("Training Praetorians in the current village")
+        else:
+            logging.error(f"Error during Praetorians training: {response.status_code}") 
     except Exception as e:
         logging.error(f"Error during Praetorians training in the current village: {e}")
-
 
 
 
@@ -233,10 +232,10 @@ def train_troops():
 # Function to attack a village and then train troops
 def attack_village_and_train_troops(village_url):
     switch_to_0000_village(capital_uid)
-    train_troops()
+    for _ in range(300):  # Train troops 300 times
+        train_troops()
+        time.sleep(0.5)  # Adjust sleep time as needed
     attack_village(village_url)
-    logging.info(f"Attacked village with URL {village_url}")  # Log after attacking a village
-
 
 
 # Function to get the list of villages, attack 50 villages, do other jobs, then attack another 50 villages
