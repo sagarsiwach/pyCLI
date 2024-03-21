@@ -22,7 +22,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 # Configuration
 username = "SCAR"
-password = "fiverr"
+password = "satkabir"
 uid = 9  # User ID for attacking and training troops
 uids = [9]
 excluded_village_ids = ['9631']
@@ -64,7 +64,7 @@ def check_internet_connection():
 def check_host():
     while True:
         try:
-            response = requests.get("https://www.gotravspeed.com", timeout=5)
+            response = requests.get("https://www.gotravspeed.com", timeout=2)
             if response.status_code == 200:
                 logging.info("Host is available")
                 return True
@@ -75,7 +75,7 @@ def check_host():
 # Function to accept cookies
 def accept_cookies():
     try:
-        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "cookie__btn"))).click()
+        WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.ID, "cookie__btn"))).click()
         logging.info("Cookies accepted")
     except Exception as e:
         logging.error(f"Error accepting cookies: {e}")
@@ -85,11 +85,11 @@ def login():
     while True:
         try:
             driver.get("https://www.gotravspeed.com")
-            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "name"))).send_keys(username)
+            WebDriverWait(driver, 1).until(EC.presence_of_element_located((By.ID, "name"))).send_keys(username)
             driver.find_element(By.ID, "password").send_keys(password)
             driver.find_element(By.ID, "password").send_keys(Keys.RETURN)
-            WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//h2/font[contains(text(),'Fun')]/ancestor::div[1]"))).click()
-            WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@class,'default__button-o-login')]"))).click()
+            WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, "//h2/font[contains(text(),'Fun')]/ancestor::div[1]"))).click()
+            WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@class,'default__button-o-login')]"))).click()
             return
         except Exception as e:
             print("Error during login:", e)
@@ -99,7 +99,7 @@ def login():
 # Function to handle errors during execution
 def handle_error():
     try:
-        continue_button = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, "//a[contains(text(),'Continue')]")))
+        continue_button = WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, "//a[contains(text(),'Continue')]")))
         continue_button.click()
     except Exception as e:
         logging.error("Error handling failed, trying to re-login:", e)
@@ -109,7 +109,7 @@ def handle_error():
 def get_player_villages(uid, excluded_village_ids):
     try:
         driver.get(f"https://fun.gotravspeed.com/profile.php?uid={uid}")
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "villages")))
+        WebDriverWait(driver, 1).until(EC.presence_of_element_located((By.ID, "villages")))
         village_links = driver.find_elements(By.XPATH, "//table[@id='villages']//a[contains(@href, 'village3.php?id=')]")
         villages = []
         for link in village_links:
