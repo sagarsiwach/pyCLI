@@ -1,7 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
@@ -25,21 +25,15 @@ username = "SCAR"
 password = "fiverr"
 uid = 9  # User ID for attacking and training troops
 uids = [9]
-excluded_village_ids = ['4431']
+excluded_village_ids = ['9631']
+capital_uid = 9631
 
 # excluded_village_ids = ['155966', '155967','155964', '156367','155968','155164','155768','4382']
 production_loops = 1100000
 storage_loops = 100000
 total_production_done = 0
 total_storage_done = 0
-server_user = "ANDANA"  # or "M16"
 
-# Set up ZAP as a proxy for requests
-proxies = {
-    'http': 'http://127.0.0.1:8080',
-    'https': 'http://127.0.0.1:8080',
-}
-requests.proxies = proxies
 
 # Setup Firefox options
 options = Options()
@@ -48,10 +42,11 @@ options.headless = True
 # Function to initialize WebDriver
 def initialize_driver():
     global driver
-    firefox_profile = webdriver.FirefoxProfile()
-    # firefox_profile.set_preference('permissions.default.image', 2)
-    options.profile = firefox_profile
-    driver = webdriver.Firefox(options=options)
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")  # This line is important for running on a server
+    chrome_options.add_argument("--disable-dev-shm-usage")  # This line is important for running in a Docker container or on a server
+    driver = webdriver.Chrome(options=chrome_options)
     logging.info("WebDriver initialized")
 
 # Function to check internet connection
@@ -100,100 +95,6 @@ def login():
             print("Error during login:", e)
             check_internet_connection()
             check_host()
-
-# Function to get village links and sort them in ascending order
-def get_village_links():
-    village_links = driver.find_elements(By.XPATH, "//table[@id='vlist']//a[contains(@href, '?vid=')]")
-    villages = [(link.get_attribute("href"), link.text) for link in village_links]
-    sorted_villages = sorted(villages, key=lambda x: x[1])
-    return [village[0] for village in sorted_villages]
-
-# Function to train Phalanxes in the first village concurrently
-def train_phalanxes_concurrently():
-    def send_train_request():
-        response = requests.post(url, headers=headers, data=phalanxes_data, cookies=cookies)
-        if response.status_code == 200:
-            logging.info("Training Phalanxes in the current village")
-        else:
-            logging.error(f"Error during Phalanxes training: {response.status_code}")
-
-    try:
-        url = "https://fun.gotravspeed.com/build.php?id=25"
-        headers = {
-            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-            "accept-language": "en-US,en;q=0.9",
-            "cache-control": "max-age=0",
-            "content-type": "application/x-www-form-urlencoded",
-            "sec-ch-ua": "\"Chromium\";v=\"122\", \"Not(A:Brand\";v=\"24\", \"Google Chrome\";v=\"122\"",
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": "\"Windows\"",
-            "sec-fetch-dest": "document",
-            "sec-fetch-mode": "navigate",
-            "sec-fetch-site": "same-origin",
-            "sec-fetch-user": "?1",
-            "upgrade-insecure-requests": "1"
-        }
-        phalanxes_data = "tf%5B3%5D=221117636153554570000&s1.x=50&s1.y=8"  # Change the troop ID and amount as needed
-        cookies = {c['name']: c['value'] for c in driver.get_cookies()}
-
-        with ThreadPoolExecutor(max_workers=20) as executor:
-            futures = [executor.submit(send_train_request) for _ in range(20)]
-            for future in concurrent.futures.as_completed(futures):
-                pass  # You can handle each future's result or exception here if needed
-
-    except Exception as e:
-        logging.error(f"Error during Phalanxes training in the current village: {e}")
-
-# Function to train Phalanxes in other villages concurrently
-def train_phalanxes_concurrently_in_other_villages():
-    def send_train_request():
-        response = requests.post(url, headers=headers, data=phalanxes_data, cookies=cookies)
-        if response.status_code == 200:
-            logging.info("Training Phalanxes in the current village")
-        else:
-            logging.error(f"Error during Phalanxes training: {response.status_code}")
-
-    try:
-        url = "https://fun.gotravspeed.com/build.php?id=19"
-        headers = {
-            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-            "accept-language": "en-US,en;q=0.9",
-            "cache-control": "max-age=0",
-            "content-type": "application/x-www-form-urlencoded",
-            "sec-ch-ua": "\"Chromium\";v=\"122\", \"Not(A:Brand\";v=\"24\", \"Google Chrome\";v=\"122\"",
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": "\"Windows\"",
-            "sec-fetch-dest": "document",
-            "sec-fetch-mode": "navigate",
-            "sec-fetch-site": "same-origin",
-            "sec-fetch-user": "?1",
-            "upgrade-insecure-requests": "1"
-        }
-        phalanxes_data = "tf%5B26%5D=221117636153554570000&s1.x=50&s1.y=8"  # Adjust the amount as needed
-        cookies = {c['name']: c['value'] for c in driver.get_cookies()}
-
-        with ThreadPoolExecutor(max_workers=4) as executor:
-            futures = [executor.submit(send_train_request) for _ in range(4)]
-            for future in concurrent.futures.as_completed(futures):
-                pass  # You can handle each future's result or exception here if needed
-
-    except Exception as e:
-        logging.error(f"Error during Phalanxes training in other villages: {e}")
-
-# Function to train troops in all villages concurrently
-def train_troops_in_all_villages_concurrently():
-    village_urls = get_village_links()
-
-    for index, village_url in enumerate(village_urls):
-        # Switch to the village
-        driver.get(village_url)
-        time.sleep(1)
-
-        # Train Praetorians in the first village, tr2 in the others
-        if index == 0:
-            train_phalanxes_concurrently()
-        else:
-            train_phalanxes_concurrently_in_other_villages()
 
 # Function to handle errors during execution
 def handle_error():
@@ -260,8 +161,8 @@ def attack_village(village_url):
             'id': village_id,
             'c': '4',  # Attack: raid
             't[1]': '0',  # Phalanx
-            't[2]': '15.0000000000000000000000e+21',  # Swordsman
-            't[3]': '0',  # Pathfinder
+            't[2]': '0',  # Swordsman
+            't[3]': '15.0000000000000000000000e+21',  # Pathfinder
             't[4]': '0',  # Theutates Thunder
             't[5]': '0',  # Druidrider
             't[6]': '0',  # Haeduan
@@ -293,7 +194,7 @@ def attack_village(village_url):
 # Function to train troops without multithreading
 def train_troops():
     try:
-        url = "https://fun.gotravspeed.com/build.php?id=19"
+        url = "https://fun.gotravspeed.com/build.php?id=25"
         headers = {
             "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
             "accept-language": "en-US,en;q=0.9",
@@ -311,7 +212,7 @@ def train_troops():
 
 
         
-        data = "tf%5B6%5D=521117636153554570000&s1.x=50&s1.y=8"
+        data = "tf%5B3%5D=521117636153554570000&s1.x=50&s1.y=8"
         cookies = {c['name']: c['value'] for c in driver.get_cookies()}
         response = requests.post(url, headers=headers, data=data, cookies=cookies)
         if response.status_code == 200:
@@ -330,7 +231,7 @@ def train_troops():
 
 # Function to attack a village and then train troops
 def attack_village_and_train_troops(village_url):
-    switch_to_0000_village()
+    switch_to_0000_village(capital_uid)
     train_troops()
     attack_village(village_url)
     # attack_village(village_url)
@@ -371,9 +272,9 @@ def get_villages_attack_and_train_multi_uid(uid_list, excluded_village_ids):
 
 
 # Function to switch to the 0000 village
-def switch_to_0000_village():
+def switch_to_0000_village(capital_uid):
     try:
-        driver.get("https://fun.gotravspeed.com/village1.php?vid=4431")
+        driver.get(f"https://fun.gotravspeed.com/village1.php?vid={capital_uid}")
         logging.info("Switched to the 0000 village")
     except Exception as e:
         logging.error(f"Error switching to the 0000 village: {e}")
