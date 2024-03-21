@@ -379,7 +379,7 @@ def train_settlers_and_find_new_village(capital_village_id, start_radius=11, max
         # Train settlers and find a new village
         train_settlers_concurrently()
         logging.info("Training 3 settlers")
-        time.sleep(1)  # Add a delay to ensure settlers are trained
+        time.sleep(0.5)  # Add a delay to ensure settlers are trained
 
         # Function to generate village IDs in a spiral pattern around the capital village
         def generate_spiral_village_ids(center_id, start_radius, max_radius):
