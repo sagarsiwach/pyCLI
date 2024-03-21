@@ -162,10 +162,10 @@ def attack_village(village_url):
             'c': '4',  # Attack: raid
             't[1]': '0',  # Phalanx
             't[2]': '0',  # Swordsman
-            't[3]': '15.0000000000000000000000e+21',  # Pathfinder
+            't[3]': '20.0000000000000000000000e+22',  # Pathfinder
             't[4]': '0',  # Theutates Thunder
             't[5]': '0',  # Druidrider
-            't[6]': '0',  # Haeduan
+            't[6]': '20.0000000000000000000000e+22',  # Haeduan
             't[7]': '0',  # Battering Ram
             't[8]': '0',  # Trebuchet
             't[9]': '0',  # Chief
@@ -212,7 +212,7 @@ def train_troops():
 
 
         
-        data = "tf%5B3%5D=521117636153554570000&s1.x=50&s1.y=8"
+        data = "tf%5B2%5D=521117636153554570000&s1.x=50&s1.y=8"
         cookies = {c['name']: c['value'] for c in driver.get_cookies()}
         response = requests.post(url, headers=headers, data=data, cookies=cookies)
         if response.status_code == 200:
@@ -286,24 +286,33 @@ check_host()
 accept_cookies()
 login()
 
-def main_flow():
+
+# Start the attacking thread
+def attack_thread():
     while True:
         try:
-            # Get the list of non-capital villages
-            non_capital_villages = get_player_villages(uid, excluded_village_ids)
-            if non_capital_villages:
-                # Shuffle the list of villages
-                random.shuffle(non_capital_villages)
-                # Iterate over the shuffled list of villages
-                for village in non_capital_villages:
-                    # Attack the village
-                    attack_village(village[1])
-                    # Train troops 150 times
-                    for _ in range(150):
-                        train_troops()
-                        time.sleep(0.5)  # Adjust sleep time as needed
+            get_villages_attack_and_train_multi_uid(uids, excluded_village_ids)
         except Exception as e:
-            logging.error(f"Error in main flow: {e}")
+            logging.error(f"Error in attack thread: {e}")
 
-# Run the main flow
-main_flow()
+# Start the training threads
+def training_thread():
+    while True:
+        try:
+            train_troops()
+            time.sleep(0.5)
+        except Exception as e:
+            logging.error(f"Error in training thread: {e}")
+
+# Create and start threads
+attack_thread = threading.Thread(target=attack_thread)
+training_threads = [threading.Thread(target=training_thread) for _ in range(4)]
+
+attack_thread.start()
+for t in training_threads:
+    t.start()
+
+# Wait for all threads to complete
+attack_thread.join()
+for t in training_threads:
+    t.join()
