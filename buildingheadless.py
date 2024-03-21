@@ -1,7 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
@@ -46,10 +46,11 @@ options.headless = True
 # Function to initialize WebDriver
 def initialize_driver():
     global driver
-    firefox_profile = webdriver.FirefoxProfile()
-    options.profile = firefox_profile
-    driver = webdriver.Firefox(options=options)
+    chrome_options = Options()
+    chrome_options.headless = True
+    driver = webdriver.Chrome(options=chrome_options)
     logging.info("WebDriver initialized")
+
 
 
 # Function to check internet connection
