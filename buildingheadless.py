@@ -43,11 +43,12 @@ options = Options()
 options.headless = True
 
 
-# Function to initialize WebDriver
 def initialize_driver():
     global driver
     chrome_options = Options()
-    chrome_options.headless = True
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")  # This line is important for running on a server
+    chrome_options.add_argument("--disable-dev-shm-usage")  # This line is important for running in a Docker container or on a server
     driver = webdriver.Chrome(options=chrome_options)
     logging.info("WebDriver initialized")
 
