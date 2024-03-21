@@ -286,33 +286,24 @@ check_host()
 accept_cookies()
 login()
 
-
-# Start the attacking thread
-def attack_thread():
+def main_flow():
     while True:
         try:
-            get_villages_attack_and_train_multi_uid(uids, excluded_village_ids)
+            # Get the list of non-capital villages
+            non_capital_villages = get_player_villages(uid, excluded_village_ids)
+            if non_capital_villages:
+                # Shuffle the list of villages
+                random.shuffle(non_capital_villages)
+                # Iterate over the shuffled list of villages
+                for village in non_capital_villages:
+                    # Attack the village
+                    attack_village(village[1])
+                    # Train troops 150 times
+                    for _ in range(150):
+                        train_troops()
+                        time.sleep(0.5)  # Adjust sleep time as needed
         except Exception as e:
-            logging.error(f"Error in attack thread: {e}")
+            logging.error(f"Error in main flow: {e}")
 
-# Start the training threads
-def training_thread():
-    while True:
-        try:
-            train_troops()
-            time.sleep(0.5)
-        except Exception as e:
-            logging.error(f"Error in training thread: {e}")
-
-# Create and start threads
-attack_thread = threading.Thread(target=attack_thread)
-training_threads = [threading.Thread(target=training_thread) for _ in range(5)]
-
-attack_thread.start()
-for t in training_threads:
-    t.start()
-
-# Wait for all threads to complete
-attack_thread.join()
-for t in training_threads:
-    t.join()
+# Run the main flow
+main_flow()
