@@ -28,14 +28,15 @@ session = requests.Session()
 # Configuration
 username = "scar"
 password = "satkabir"
-uid = 13  # User ID for attacking and training troops
+uid = 9  # User ID for attacking and training troops
 excluded_village_ids = []
 production_loops = 1
 storage_loops = 1
 total_production_done = 0
 total_storage_done = 0
 server_user = "ANDANA"  # or "M16"
-global_village_number = 305  # Used for renaming the secondary villages
+global_village_number = 3  # Used for renaming the secondary villages
+capital_village = 9631
 
 # Setup Firefox options
 options = Options()
@@ -548,7 +549,7 @@ def master_function():
         # Build the secondary village
         build_secondary_village()
         # Find and settle a new village
-        train_settlers_and_find_new_village(8426)  # Pass the driver object here
+        train_settlers_and_find_new_village(capital_village)  # Pass the driver object here
         # start_celebration(100)  # Uncomment and replace with your function to start celebration
         # If the number of villages reaches the limit, break the loop
         if len(current_village_ids) >= max_villages:
