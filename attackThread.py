@@ -194,7 +194,7 @@ def attack_village(village_url):
 # Function to train troops without multithreading
 def train_troops():
     try:
-        url = "https://fun.gotravspeed.com/build.php?id=25"
+        url = "https://fun.gotravspeed.com/build.php?id=19"
         headers = {
             "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
             "accept-language": "en-US,en;q=0.9",
@@ -212,7 +212,7 @@ def train_troops():
 
 
         
-        data = "tf%5B2%5D=521117636153554570000&s1.x=50&s1.y=8"
+        data = "tf%5B6%5D=521117636153554570000&s1.x=50&s1.y=8"
         cookies = {c['name']: c['value'] for c in driver.get_cookies()}
         response = requests.post(url, headers=headers, data=data, cookies=cookies)
         if response.status_code == 200:
@@ -287,32 +287,22 @@ accept_cookies()
 login()
 
 
-# Start the attacking thread
-def attack_thread():
-    while True:
-        try:
-            get_villages_attack_and_train_multi_uid(uids, excluded_village_ids)
-        except Exception as e:
-            logging.error(f"Error in attack thread: {e}")
+while True:
+    for uid in uids:
+        non_capital_villages = get_player_villages(uid, excluded_village_ids)
+        if non_capital_villages:
+            random.shuffle(non_capital_villages)  # Shuffle the list of villages
+            for village in non_capital_villages:
+                # Switch to the 0000 village and train troops
+                # switch_to_0000_village(capital_uid)
+                for _ in range(150):  # Train troops 150 times
+                    train_troops()
+                
+                # Attack village once
+                attack_village(village[1])
 
-# Start the training threads
-def training_thread():
-    while True:
-        try:
-            train_troops()
-            time.sleep(0.5)
-        except Exception as e:
-            logging.error(f"Error in training thread: {e}")
+                # Optional: sleep between operations to mimic human-like intervals and prevent rate limiting
+                time.sleep(random.uniform(0.1, 0.5))  # Random sleep between operations
 
-# Create and start threads
-attack_thread = threading.Thread(target=attack_thread)
-training_threads = [threading.Thread(target=training_thread) for _ in range(4)]
-
-attack_thread.start()
-for t in training_threads:
-    t.start()
-
-# Wait for all threads to complete
-attack_thread.join()
-for t in training_threads:
-    t.join()
+        # Optional: sleep between different user IDs to space out the actions
+        time.sleep(random.uniform(1, 2))  # Random sleep between user IDs
