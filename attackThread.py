@@ -159,6 +159,7 @@ def attack_village(village_url):
         # Construct the data for the POST request
         data = {
             'id': village_id,
+            'g-recaptcha-response': 'xxxx',
             'c': '4',  # Attack: raid
             't[1]': '0',  # Phalanx
             't[2]': '0',  # Swordsman
@@ -194,7 +195,7 @@ def attack_village(village_url):
 # Function to train troops without multithreading
 def train_troops():
     try:
-        url = "https://fun.gotravspeed.com/build.php?id=19"
+        url = "https://fun.gotravspeed.com/build.php?id=25"
         headers = {
             "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
             "accept-language": "en-US,en;q=0.9",
@@ -212,7 +213,7 @@ def train_troops():
 
 
         
-        data = "tf%5B6%5D=521117636153554570000&s1.x=50&s1.y=8"
+        data = "tf%5B2%5D=521117636153554570000&s1.x=50&s1.y=8"
         cookies = {c['name']: c['value'] for c in driver.get_cookies()}
         response = requests.post(url, headers=headers, data=data, cookies=cookies)
         if response.status_code == 200:
