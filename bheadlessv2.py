@@ -1,7 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
@@ -23,17 +23,26 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
+# Load settlements from file
+def load_settlements():
+    try:
+        with open("settlements.json", "r") as file:
+            return json.load(file)
+    except FileNotFoundError:
+        return {"villages": []}
+
+# Save settlements to file
+def save_settlements(settlements):
+    with open("settlements.json", "w") as file:
+        json.dump(settlements, file, indent=4)
+
+
 session = requests.Session()
 
 # Configuration
 username = "scar"
-<<<<<<< HEAD
-password = "fiverr"
-uid = 13  # User ID for attacking and training troops
-=======
 password = "satkabir"
 uid = 9  # User ID for attacking and training troops
->>>>>>> f325bd2ad9405745efe7fe26136491d5893e8ed9
 excluded_village_ids = []
 production_loops = 1
 storage_loops = 1
@@ -47,17 +56,16 @@ capital_village = 9631
 options = Options()
 options.headless = True
 
-# Function to initialize WebDriver
 
-
-# Function to initialize WebDriver
 def initialize_driver():
     global driver
-    firefox_profile = webdriver.FirefoxProfile()
-    # firefox_profile.set_preference('permissions.default.image', 2)
-    options.profile = firefox_profile
-    driver = webdriver.Firefox(options=options)
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")  # This line is important for running on a server
+    chrome_options.add_argument("--disable-dev-shm-usage")  # This line is important for running in a Docker container or on a server
+    driver = webdriver.Chrome(options=chrome_options)
     logging.info("WebDriver initialized")
+
 
 
 # Function to check internet connection
@@ -378,77 +386,88 @@ def build_or_upgrade_resource(position_id, loop):
         logging.error(f"Error upgrading resource at position {position_id}: {e}")
 
 
-def train_settlers_and_find_new_village(capital_village_id, start_radius=11, max_radius=25):
+def train_settlers_and_find_new_village():
     try:
-
         # Train settlers and find a new village
         train_settlers_concurrently()
         logging.info("Training 3 settlers")
         time.sleep(0.5)  # Add a delay to ensure settlers are trained
 
-        # Function to generate village IDs in a spiral pattern around the capital village
-        def generate_spiral_village_ids(center_id, start_radius, max_radius):
-            ids = []
-            for radius in range(start_radius, max_radius + 1):
-                # Generate IDs in a spiral pattern
-                for i in range(-radius, radius + 1):
-                    ids.append(center_id - 401 * radius + i)
-                for i in range(-radius + 1, radius):
-                    ids.append(center_id - 401 * i + radius)
-                for i in range(-radius, radius + 1):
-                    ids.append(center_id + 401 * radius - i)
-                for i in range(-radius + 1, radius):
-                    ids.append(center_id + 401 * i - radius)
-            return ids
+        # Load settlements from file
+        settlements = load_settlements()
 
-        # Generate village IDs in a spiral pattern around the capital village
-        spiral_village_ids = generate_spiral_village_ids(capital_village_id, start_radius, max_radius)
-        logging.info(f"Generated spiral village IDs around capital village ID {capital_village_id}")
+        # Use the pre-generated village IDs from the settlements file
+        spiral_village_ids = [village["id"] for village in settlements["villages"] if not village.get("settled", False)]
+        logging.info("Using pre-generated spiral village IDs")
 
         # Navigate to the Map and find a suitable spot for the new village
         driver.get("https://fun.gotravspeed.com/map.php")
         logging.info("Navigated to Map")
 
         for village_id in spiral_village_ids:
-            driver.get(f"https://fun.gotravspeed.com/village3.php?id={village_id}")
-            logging.info(f"Checking village ID {village_id} for suitability")
-            if "building a new village" in driver.page_source:
-                logging.info(f"Found a suitable spot for a new village at ID {village_id}")
-                build_new_village_link = WebDriverWait(driver, 3).until(
-                    EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'building a new village')]"))
-                )
-                build_new_village_link.click()
-                logging.info("Clicked on 'building a new village'")
-                WebDriverWait(driver, 3).until(EC.element_to_be_clickable((By.ID, "btn_ok"))).click()
-                logging.info("Confirmed new village")
-                break  # Stop searching once a suitable spot is found
-
-        # Wait for the new village popup and handle it
-        max_attempts = 2
-        attempts = 0
-        while attempts < max_attempts:
-            driver.refresh()  # Refresh the page to check for the popup
             try:
-                continue_link = WebDriverWait(driver, 3).until(
-                    EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), '» continue')]"))
-                )
-                continue_link.click()
-                logging.info("Clicked on 'Continue' in the new village popup")
-                break  # Exit the loop once the popup is handled
-            except TimeoutException:
-                attempts += 1
-                logging.info(f"Attempt {attempts}/{max_attempts} to find 'Continue' link in new village popup")
+                driver.get(f"https://fun.gotravspeed.com/village3.php?id={village_id}")
+                logging.info(f"Checking village ID {village_id} for suitability")
+                if "building a new village" in driver.page_source:
+                    logging.info(f"Found a suitable spot for a new village at ID {village_id}")
+                    build_new_village_link = WebDriverWait(driver, 3).until(
+                        EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'building a new village')]"))
+                    )
+                    build_new_village_link.click()
+                    logging.info("Clicked on 'building a new village'")
+                    WebDriverWait(driver, 3).until(EC.element_to_be_clickable((By.ID, "btn_ok"))).click()
+                    logging.info("Confirmed new village")
+
+                    # Wait for the new village popup and handle it
+                    max_attempts = 2
+                    attempts = 0
+                    while attempts < max_attempts:
+                        driver.refresh()  # Refresh the page to check for the popup
+                        try:
+                            continue_link = WebDriverWait(driver, 3).until(
+                                EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), '» continue')]"))
+                            )
+                            continue_link.click()
+                            logging.info("Clicked on 'Continue' in the new village popup")
+                            break  # Exit the loop once the popup is handled
+                        except TimeoutException:
+                            attempts += 1
+                            logging.info(f"Attempt {attempts}/{max_attempts} to find 'Continue' link in new village popup")
+
+                    # Mark the village as settled in the settlements file
+                    for village in settlements["villages"]:
+                        if village["id"] == village_id:
+                            village["settled"] = True
+                            break
+                    save_settlements(settlements)
+                    break  # Stop searching once a suitable spot is found
+                else:
+                    # Mark the village as settled in the settlements file even if not settleable
+                    for village in settlements["villages"]:
+                        if village["id"] == village_id:
+                            village["settled"] = True
+                            break
+                    save_settlements(settlements)
+            except Exception as e:
+                logging.error(f"Error while checking village ID {village_id}: {e}")
+                # Mark the village as settled in the settlements file in case of error
+                for village in settlements["villages"]:
+                    if village["id"] == village_id:
+                        village["settled"] = True
+                        break
+                save_settlements(settlements)
 
         logging.info("Finished training settlers and finding a new village")
     except Exception as e:
         logging.error(f"Error during training settlers and finding a new village: {e}")
+
 
 # Function to switch to the 0000 village
 
 
 def switch_to_0000_village():
     try:
-        driver.get("https://fun.gotravspeed.com/village1.php?vid=5231")
+        driver.get("https://fun.gotravspeed.com/village1.php?vid=9625")
         logging.info("Switched to the 0000 village")
     except Exception as e:
         logging.error(f"Error switching to the 0000 village: {e}")
@@ -588,14 +607,14 @@ def build_secondary_village():
         position_id=24, building_id=44, loop=1, building_name="Christmas Tree"
     )
     # build_and_upgrade(position_id=37, building_id=27, loop=20, building_name="Treasury")z
-    
-    
+
+
 def build_ww():
-    
+
     build_and_upgrade(
         position_id=25, building_id=40, loop=1000, building_name="World Wonder"
     )
-    
+
 
 
 def rename_all_villages():
@@ -627,9 +646,8 @@ login()
 
 while True:
     try:
-        build_capital_village()
         # rename_all_villages()
-        # master_function()
+        master_function()
         # build_ww()
         # rename_village(10829, "0000")
         # get_village_ids(excluded_village_ids)

@@ -1,7 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
@@ -23,17 +23,26 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
+# Load settlements from file
+def load_settlements():
+    try:
+        with open("settlements.json", "r") as file:
+            return json.load(file)
+    except FileNotFoundError:
+        return {"villages": []}
+
+# Save settlements to file
+def save_settlements(settlements):
+    with open("settlements.json", "w") as file:
+        json.dump(settlements, file, indent=4)
+
+
 session = requests.Session()
 
 # Configuration
 username = "scar"
-<<<<<<< HEAD
-password = "fiverr"
-uid = 13  # User ID for attacking and training troops
-=======
 password = "satkabir"
 uid = 9  # User ID for attacking and training troops
->>>>>>> f325bd2ad9405745efe7fe26136491d5893e8ed9
 excluded_village_ids = []
 production_loops = 1
 storage_loops = 1
@@ -47,17 +56,16 @@ capital_village = 9631
 options = Options()
 options.headless = True
 
-# Function to initialize WebDriver
 
-
-# Function to initialize WebDriver
 def initialize_driver():
     global driver
-    firefox_profile = webdriver.FirefoxProfile()
-    # firefox_profile.set_preference('permissions.default.image', 2)
-    options.profile = firefox_profile
-    driver = webdriver.Firefox(options=options)
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")  # This line is important for running on a server
+    chrome_options.add_argument("--disable-dev-shm-usage")  # This line is important for running in a Docker container or on a server
+    driver = webdriver.Chrome(options=chrome_options)
     logging.info("WebDriver initialized")
+
 
 
 # Function to check internet connection
@@ -588,14 +596,14 @@ def build_secondary_village():
         position_id=24, building_id=44, loop=1, building_name="Christmas Tree"
     )
     # build_and_upgrade(position_id=37, building_id=27, loop=20, building_name="Treasury")z
-    
-    
+
+
 def build_ww():
-    
+
     build_and_upgrade(
         position_id=25, building_id=40, loop=1000, building_name="World Wonder"
     )
-    
+
 
 
 def rename_all_villages():
@@ -627,9 +635,8 @@ login()
 
 while True:
     try:
-        build_capital_village()
         # rename_all_villages()
-        # master_function()
+        master_function()
         # build_ww()
         # rename_village(10829, "0000")
         # get_village_ids(excluded_village_ids)

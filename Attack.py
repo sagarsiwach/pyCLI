@@ -16,9 +16,9 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 # Configuration
 username = "SCAR"
-password = "kabira"
+password = "satkabir"
 uid = 9  # User ID for attacking and training troops
-excluded_village_ids = ['8426']
+excluded_village_ids = ['9631']
 # excluded_village_ids = ['155966', '155967','155964', '156367','155968','155164','155768','4382']
 production_loops = 1100000
 storage_loops = 100000
@@ -165,7 +165,7 @@ def train_phalanxes_concurrently_in_other_villages():
         cookies = {c['name']: c['value'] for c in driver.get_cookies()}
 
         with ThreadPoolExecutor(max_workers=4) as executor:
-            futures = [executor.submit(send_train_request) for _ in range(4)]
+            futures = [executor.submit(send_train_request) for _ in range(100)]
             for future in concurrent.futures.as_completed(futures):
                 pass  # You can handle each future's result or exception here if needed
 
@@ -260,11 +260,11 @@ def train_troops():
             "sec-fetch-user": "?1",
             "upgrade-insecure-requests": "1"
         }
-        data = "tf%5B6%5D=521117636153554570000&s1.x=50&s1.y=8"
+        data = "tf%5B2%5D=521117636153554570000&s1.x=50&s1.y=8"
         cookies = {c['name']: c['value'] for c in driver.get_cookies()}
 
-        with ThreadPoolExecutor(max_workers=3) as executor:
-            futures = [executor.submit(send_train_request) for _ in range(6)]
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            futures = [executor.submit(send_train_request) for _ in range(150)]
             for future in concurrent.futures.as_completed(futures):
                 pass  # You can handle each future's result or exception here if needed
 
@@ -274,8 +274,8 @@ def train_troops():
 # Function to attack a village and then train troops
 def attack_village_and_train_troops(village_url):
     switch_to_0000_village()
-    train_troops()
     attack_village(village_url)
+    train_troops()
     # attack_village(village_url)
 
 # Function to get the list of villages, attack 50 villages, do other jobs, then attack another 50 villages
@@ -316,7 +316,7 @@ def get_villages_attack_and_train_multi_uid(uid_list, excluded_village_ids):
 # Function to switch to the 0000 village
 def switch_to_0000_village():
     try:
-        driver.get("https://fun.gotravspeed.com/village1.php?vid=5231")
+        driver.get("https://fun.gotravspeed.com/village1.php?vid=9631")
         logging.info("Switched to the 0000 village")
     except Exception as e:
         logging.error(f"Error switching to the 0000 village: {e}")
