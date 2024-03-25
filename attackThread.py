@@ -300,11 +300,15 @@ while True:
 
                 # Define train_troops_loop inside the main flow
                 def train_troops_loop():
-                    for _ in range(200):  # Train troops 150 times
+                    for _ in range(90):  # Train troops 150 times
                         train_troops()
 
                 # Use ThreadPoolExecutor to run train_troops_loop in two threads
-                with ThreadPoolExecutor(max_workers=2) as executor:
+                with ThreadPoolExecutor(max_workers=6) as executor:
+                    executor.submit(train_troops_loop)
+                    executor.submit(train_troops_loop)
+                    executor.submit(train_troops_loop)
+                    executor.submit(train_troops_loop)
                     executor.submit(train_troops_loop)
                     executor.submit(train_troops_loop)
 
