@@ -58,8 +58,8 @@ def check_internet_connection():
         except requests.ConnectionError:
             logging.warning("No internet connection. Retrying...")
             time.sleep(1)
-            
-            
+
+
 def save_village_list(village_list):
     with open("villages.txt", "w") as file:
         for village in village_list:
@@ -143,7 +143,7 @@ def accept_cookies():
 #         driver.find_element(By.ID, "password").send_keys(password)
 #         driver.find_element(By.ID, "password").send_keys(Keys.RETURN)
 #         WebDriverWait(driver, 3).until(EC.element_to_be_clickable((By.XPATH, "//h2/font[contains(text(),'Fun')]/ancestor::div[1]"))).click()
-        
+
 #         # Select the server user
 #         if server_user == "DRAVAZ":
 #             WebDriverWait(driver, 3).until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Login as DRAVAZ')]"))).click()
@@ -151,7 +151,7 @@ def accept_cookies():
 #             WebDriverWait(driver, 3).until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Login as M16')]"))).click()
 #         else:
 #             raise ValueError(f"Invalid server user: {server_user}")
-        
+
 #         logging.info(f"Logged in successfully as {server_user}")
 #     except Exception as e:
 #         logging.error(f"Error during login: {e}")
@@ -181,15 +181,15 @@ def navigate_to_construction_page():
         logging.info("Navigated to construction page and enabled build mode")
     except Exception as e:
         logging.error(f"Error navigating to construction page: {e}")
-        
-        
-        
-        
+
+
+
+
 
 # def build_building(position_id, building_id, building_name):
 #     try:
 #         logging.info(f"Attempting to build {building_name} (ID: {building_id}) at position {position_id}")
-        
+
 #         # Navigate to the Village Center
 #         driver.get(f"https://fun.gotravspeed.com/village2.php")
 #         logging.info("Navigated to Village Center")
@@ -199,7 +199,7 @@ def navigate_to_construction_page():
 #         driver.execute_script("arguments[0].scrollIntoView();", position_element)
 #         position_element.click()
 #         logging.info(f"Clicked on empty position {position_id}")
-        
+
 #         # Find the "Construct buildings" link for the specified building using position and building ID
 #         construct_link = WebDriverWait(driver, 3).until(
 #             EC.element_to_be_clickable((By.XPATH, f"//area[@id='a{position_id}']/ancestor::map/following-sibling::div//a[@href='build.php?id={position_id}&gid={building_id}']"))
@@ -216,7 +216,7 @@ def navigate_to_construction_page():
 # def build_building(position_id, building_id, building_name):
 #     try:
 #         logging.info(f"Attempting to build {building_name} (ID: {building_id}) at position {position_id}")
-        
+
 #         # Navigate to the specific position URL
 #         position_response = session.get(f"https://fun.gotravspeed.com/build.php?id={position_id}")
 #         logging.info(f"Retrieved CSRF token from position {position_id}")
@@ -307,7 +307,7 @@ def build_and_upgrade(position_id, building_id, loop, building_name):
     except Exception as e:
         logging.error(f"Error encountered during build and upgrade for {building_name}: {e}")
 
-        
+
 
 # def upgrade_building(position_id, building_name):
 #     try:
@@ -400,8 +400,8 @@ def upgrade_resource(position_id):
     except Exception as e:
         logging.error(f"Error upgrading building at position {position_id}: {e}")
 
-        
-        
+
+
 def build_and_upgrade_resource(position_id):
     try:
         for _ in range(10):
@@ -440,8 +440,8 @@ def start_celebration(times):
             # Handle the error appropriately (e.g., re-login, retry, etc.)
 
 
-    
-    
+
+
 def build_capital_village():
     build_and_upgrade(position_id=26, building_id=15, loop=20, building_name="Main Building")
     build_or_upgrade_resource(position_id=1, loop=10)
@@ -483,12 +483,12 @@ def build_capital_village():
     build_and_upgrade(position_id=38, building_id=18, loop=20, building_name="Embassy")
     build_and_upgrade(position_id=37, building_id=27, loop=20, building_name="Treasury")
 
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
 
 
 
@@ -550,7 +550,7 @@ def build_or_upgrade_resource(position_id, loop):
             position_response = session.get(f"https://fun.gotravspeed.com/build.php?id={position_id}")
             position_soup = BeautifulSoup(position_response.text, 'html.parser')
             csrf_token = position_soup.find('a', {'class': 'build'})['href'].split('&k=')[1]
-            
+
             # Send a GET request to upgrade the building or field
             upgrade_response = session.get(f"https://fun.gotravspeed.com/village2.php?id={position_id}&k={csrf_token}")
             if upgrade_response.status_code == 200:
@@ -619,7 +619,7 @@ def train_settlers():
                     EC.element_to_be_clickable((By.ID, "btn_ok"))
                 ).click()
                 logging.info("Confirmed new village")
-                
+
                 # Wait for the new village popup and handle it
                 while True:
                     driver.refresh()  # Refresh the page to check for the popup
@@ -648,8 +648,8 @@ def switch_to_0000_village():
         logging.info("Switched to the 0000 village")
     except Exception as e:
         logging.error(f"Error switching to the 0000 village: {e}")
-        
-        
+
+
 
 def rename_village(village_id, village_name):
     # Navigate to the profile page
@@ -690,23 +690,23 @@ def rename_village(village_id, village_name):
 
     logging.info(f"Renamed village {village_id} to {village_name}")
 
-    
+
 def get_village_ids(excluded_ids):
     driver.get("https://fun.gotravspeed.com/village2.php")
     village_links = WebDriverWait(driver, 3).until(
         EC.presence_of_all_elements_located((By.XPATH, "//table[@id='vlist']//td[@class='link']//a[contains(@href, 'vid=')]"))
     )
     village_ids = [link.get_attribute("href").split('=')[-1] for link in village_links]
-    
+
     # Load the existing village list from the file
     village_list = load_village_list()
-    
+
     # Update the village list with the new IDs and names
     for vid in village_ids:
         if vid not in excluded_ids:
             if not any(village['id'] == vid for village in village_list):
                 village_list.append({"id": vid, "name": "Unknown"})
-    
+
     # Save the updated village list to the file
     save_village_list(village_list)
 
@@ -715,8 +715,8 @@ def get_village_ids(excluded_ids):
 
 
 
-    
-    
+
+
 
 
 def switch_to_village(village_id):
@@ -747,16 +747,16 @@ def master_function():
     while True:
         # Get the list of current village IDs
         current_village_ids = get_village_ids(excluded_village_ids)
-        
+
         newest_village_id = current_village_ids[-1]
         switch_to_village(newest_village_id)
-        
+
         rename_village(newest_village_id, f"{global_village_number:04}")
         global_village_number += 1
 
         # Build the secondary village
         build_secondary_village()
-        
+
         # Find and settle a new village
         radius = 1  # Starting search radius
         while True:
@@ -786,10 +786,10 @@ def master_function():
 #==============================================
 
 
-        
+
 def build_secondary_village():
 
-    # rename_village()    
+    # rename_village()
     build_and_upgrade(position_id=26, building_id=15, loop=20, building_name="Main Building")
     build_and_upgrade(position_id=39, building_id=16, loop=20, building_name="Rally Point")
     build_and_upgrade(position_id=40, building_id=33, loop=20, building_name="City Wall")
