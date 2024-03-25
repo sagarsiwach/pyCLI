@@ -25,8 +25,8 @@ username = "SCAR"
 password = "satkabir"
 uid = 9  # User ID for attacking and training troops
 uids = [9]
-excluded_village_ids = ['9631']
-capital_uid = 9631
+excluded_village_ids = ['9625']
+capital_uid = 9625
 
 # excluded_village_ids = ['155966', '155967','155964', '156367','155968','155164','155768','4382']
 production_loops = 1100000
@@ -123,10 +123,10 @@ def get_player_villages(uid, excluded_village_ids):
         return sorted_villages
     except Exception as e:
         logging.error(f"Error getting non-capital villages for player {uid} excluding village IDs {excluded_village_ids}: {e}")
-        
-        
-        
-        
+
+
+
+
 def attack_village(village_url):
     try:
         # Derive the village ID from the village URL
@@ -162,13 +162,10 @@ def attack_village(village_url):
             'g-recaptcha-response': 'xxxx',
             'c': '4',  # Attack: raid
             't[1]': '0',  # Phalanx
-<<<<<<< HEAD
-            't[2]': '20.0000000000000000000000e+21',  # Swordsman
+            't[2]': '20.0000000000000000000000e+22',  # Swordsman
             't[3]': '0',  # Pathfinder
-=======
             't[2]': '0',  # Swordsman
-            't[3]': '20.0000000000000000000000e+22',  # Pathfinder
->>>>>>> f325bd2ad9405745efe7fe26136491d5893e8ed9
+            't[3]': '0',  # Pathfinder
             't[4]': '0',  # Theutates Thunder
             't[5]': '0',  # Druidrider
             't[6]': '20.0000000000000000000000e+22',  # Haeduan
@@ -191,7 +188,7 @@ def attack_village(village_url):
             print(f"Attacked village with ID {village_id}")
         else:
             print(f"Error attacking village with ID {village_id}: {attack_response.status_code}")
-        
+
         time.sleep(0.05)
 
     except Exception as e:
@@ -217,14 +214,14 @@ def train_troops():
         }
 
 
-        
+
         data = "tf%5B2%5D=521117636153554570000&s1.x=50&s1.y=8"
         cookies = {c['name']: c['value'] for c in driver.get_cookies()}
         response = requests.post(url, headers=headers, data=data, cookies=cookies)
         if response.status_code == 200:
             logging.info("Training Praetorians in the current village")
         else:
-            logging.error(f"Error during Praetorians training: {response.status_code}") 
+            logging.error(f"Error during Praetorians training: {response.status_code}")
     except Exception as e:
         logging.error(f"Error during Praetorians training in the current village: {e}")
 
@@ -292,7 +289,6 @@ check_host()
 accept_cookies()
 login()
 
-
 while True:
     for uid in uids:
         non_capital_villages = get_player_villages(uid, excluded_village_ids)
@@ -301,29 +297,19 @@ while True:
             for village in non_capital_villages:
                 # Switch to the 0000 village and train troops
                 # switch_to_0000_village(capital_uid)
-                for _ in range(150):  # Train troops 150 times
-                    train_troops()
-                
+
+                # Define train_troops_loop inside the main flow
+                def train_troops_loop():
+                    for _ in range(150):  # Train troops 150 times
+                        train_troops()
+
+                # Use ThreadPoolExecutor to run train_troops_loop in two threads
+                with ThreadPoolExecutor(max_workers=2) as executor:
+                    executor.submit(train_troops_loop)
+                    executor.submit(train_troops_loop)
+
                 # Attack village once
                 attack_village(village[1])
 
                 # Optional: sleep between operations to mimic human-like intervals and prevent rate limiting
                 time.sleep(random.uniform(0.1, 0.5))  # Random sleep between operations
-
-<<<<<<< HEAD
-# Create and start threads
-attack_thread = threading.Thread(target=attack_thread)
-training_threads = [threading.Thread(target=training_thread) for _ in range(30)]
-
-attack_thread.start()
-for t in training_threads:
-    t.start()
-
-# Wait for all threads to complete
-attack_thread.join()
-for t in training_threads:
-    t.join()
-=======
-        # Optional: sleep between different user IDs to space out the actions
-        time.sleep(random.uniform(1, 2))  # Random sleep between user IDs
->>>>>>> f325bd2ad9405745efe7fe26136491d5893e8ed9
