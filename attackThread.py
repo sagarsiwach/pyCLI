@@ -25,7 +25,7 @@ username = "SCAR"
 password = "satkabir"
 uid = 9  # User ID for attacking and training troops
 uids = [9]
-excluded_village_ids = ['9625']
+excluded_village_ids = ['9625', '7981']
 capital_uid = 9625
 
 # excluded_village_ids = ['155966', '155967','155964', '156367','155968','155164','155768','4382']
