@@ -304,7 +304,7 @@ while True:
                         train_troops()
 
                 # Use ThreadPoolExecutor to run train_troops_loop in two threads
-                with ThreadPoolExecutor(max_workers=2) as executor:
+                with ThreadPoolExecutor(max_workers=4) as executor:
                     executor.submit(train_troops_loop)
                     executor.submit(train_troops_loop)
 
